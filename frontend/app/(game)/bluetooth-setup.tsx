@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -8,18 +8,30 @@ import {
   ActivityIndicator,
   Alert,
   Platform,
+  PermissionsAndroid,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient/build/LinearGradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from 'axios';
 import { useLanguage } from '../../src/context/LanguageContext';
+import { BleManager, Device, State } from 'react-native-ble-plx';
+
+const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL || '';
 
 interface BluetoothDevice {
   id: string;
-  name: string;
-  rssi: number;
+  name: string | null;
+  rssi: number | null;
   connected: boolean;
+}
+
+interface SavedDevice {
+  device_id: string;
+  device_name: string;
+  connected_at: string;
 }
 
 export default function BluetoothSetupScreen() {
@@ -27,69 +39,288 @@ export default function BluetoothSetupScreen() {
   const insets = useSafeAreaInsets();
   const { t } = useLanguage();
   
+  const [bleManager] = useState(() => new BleManager());
   const [scanning, setScanning] = useState(false);
   const [devices, setDevices] = useState<BluetoothDevice[]>([]);
   const [connectedDevice, setConnectedDevice] = useState<BluetoothDevice | null>(null);
+  const [savedDevice, setSavedDevice] = useState<SavedDevice | null>(null);
+  const [bluetoothState, setBluetoothState] = useState<State>(State.Unknown);
+  const [connecting, setConnecting] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  
+  const scanTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const devicesRef = useRef<Map<string, BluetoothDevice>>(new Map());
 
-  // Simulirani uređaji za demo
-  const mockDevices: BluetoothDevice[] = [
-    { id: '1', name: 'FrozenGlove-001', rssi: -45, connected: false },
-    { id: '2', name: 'BLE Beacon A', rssi: -62, connected: false },
-    { id: '3', name: 'iBeacon-X', rssi: -78, connected: false },
-  ];
-
-  const handleScan = () => {
-    setScanning(true);
-    setDevices([]);
+  useEffect(() => {
+    initializeBluetooth();
+    loadSavedDevice();
     
-    // Simulacija skeniranja
-    setTimeout(() => {
-      setDevices(mockDevices);
-      setScanning(false);
-    }, 3000);
-  };
+    return () => {
+      if (scanTimeoutRef.current) {
+        clearTimeout(scanTimeoutRef.current);
+      }
+      bleManager.stopDeviceScan();
+      bleManager.destroy();
+    };
+  }, []);
 
-  const handleConnect = (device: BluetoothDevice) => {
-    Alert.alert(
-      t('bluetooth.connecting'),
-      `${t('bluetooth.connectingTo')} ${device.name}...`,
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('bluetooth.connect'),
-          onPress: () => {
-            // Simulacija povezivanja
-            setTimeout(() => {
-              setConnectedDevice({ ...device, connected: true });
-              Alert.alert(
-                t('common.success'),
-                `${t('bluetooth.connectedTo')} ${device.name}!`
-              );
-            }, 1500);
-          },
-        },
-      ]
-    );
-  };
+  const initializeBluetooth = async () => {
+    try {
+      // Request permissions for Android
+      if (Platform.OS === 'android') {
+        await requestAndroidPermissions();
+      }
 
-  const handleDisconnect = () => {
-    if (connectedDevice) {
-      setConnectedDevice(null);
-      Alert.alert(t('common.success'), t('bluetooth.disconnected'));
+      // Check Bluetooth state
+      const state = await bleManager.state();
+      setBluetoothState(state);
+
+      // Subscribe to Bluetooth state changes
+      bleManager.onStateChange((newState) => {
+        setBluetoothState(newState);
+      }, true);
+
+      setLoading(false);
+    } catch (error) {
+      console.error('Error initializing Bluetooth:', error);
+      setLoading(false);
     }
   };
 
-  const getRssiIcon = (rssi: number) => {
+  const requestAndroidPermissions = async () => {
+    if (Platform.OS !== 'android') return true;
+
+    try {
+      const apiLevel = Platform.Version as number;
+      
+      if (apiLevel >= 31) {
+        // Android 12+
+        const results = await PermissionsAndroid.requestMultiple([
+          PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN,
+          PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT,
+          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+        ]);
+        
+        return Object.values(results).every(
+          (result) => result === PermissionsAndroid.RESULTS.GRANTED
+        );
+      } else {
+        // Android 11 and below
+        const result = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
+        );
+        return result === PermissionsAndroid.RESULTS.GRANTED;
+      }
+    } catch (error) {
+      console.error('Permission request error:', error);
+      return false;
+    }
+  };
+
+  const loadSavedDevice = async () => {
+    try {
+      const token = await AsyncStorage.getItem('authToken');
+      if (token) {
+        const response = await axios.get(`${API_URL}/api/ble/device?token=${token}`);
+        if (response.data.device) {
+          setSavedDevice(response.data.device);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading saved device:', error);
+    }
+  };
+
+  const handleScan = async () => {
+    if (bluetoothState !== State.PoweredOn) {
+      Alert.alert(
+        t('bluetooth.bluetoothOff'),
+        t('bluetooth.turnOnBluetooth'),
+        [{ text: t('common.ok') }]
+      );
+      return;
+    }
+
+    // Clear previous devices
+    devicesRef.current.clear();
+    setDevices([]);
+    setScanning(true);
+
+    // Start scanning
+    bleManager.startDeviceScan(
+      null, // Scan for all services
+      { allowDuplicates: false },
+      (error, device) => {
+        if (error) {
+          console.error('Scan error:', error);
+          setScanning(false);
+          return;
+        }
+
+        if (device && device.id) {
+          const bleDevice: BluetoothDevice = {
+            id: device.id,
+            name: device.name || device.localName || null,
+            rssi: device.rssi,
+            connected: false,
+          };
+
+          // Only add devices with names or strong signal
+          if (bleDevice.name || (bleDevice.rssi && bleDevice.rssi > -80)) {
+            devicesRef.current.set(device.id, bleDevice);
+            setDevices(Array.from(devicesRef.current.values()));
+          }
+        }
+      }
+    );
+
+    // Stop scanning after 10 seconds
+    scanTimeoutRef.current = setTimeout(() => {
+      bleManager.stopDeviceScan();
+      setScanning(false);
+    }, 10000);
+  };
+
+  const handleStopScan = () => {
+    if (scanTimeoutRef.current) {
+      clearTimeout(scanTimeoutRef.current);
+    }
+    bleManager.stopDeviceScan();
+    setScanning(false);
+  };
+
+  const handleConnect = async (device: BluetoothDevice) => {
+    try {
+      setConnecting(device.id);
+      
+      // Stop scanning first
+      bleManager.stopDeviceScan();
+      setScanning(false);
+
+      // Connect to device
+      const connectedBleDevice = await bleManager.connectToDevice(device.id, {
+        timeout: 10000,
+      });
+
+      // Discover services and characteristics
+      await connectedBleDevice.discoverAllServicesAndCharacteristics();
+
+      const updatedDevice: BluetoothDevice = {
+        ...device,
+        name: connectedBleDevice.name || connectedBleDevice.localName || device.name,
+        connected: true,
+      };
+
+      setConnectedDevice(updatedDevice);
+
+      // Save to backend
+      await saveDeviceToBackend(updatedDevice);
+
+      Alert.alert(
+        t('common.success'),
+        `${t('bluetooth.connectedTo')} ${updatedDevice.name || updatedDevice.id}!`
+      );
+
+      // Monitor disconnection
+      bleManager.onDeviceDisconnected(device.id, (error, disconnectedDevice) => {
+        if (disconnectedDevice) {
+          setConnectedDevice(null);
+          Alert.alert(t('bluetooth.disconnected'), t('bluetooth.deviceDisconnected'));
+        }
+      });
+
+    } catch (error: any) {
+      console.error('Connection error:', error);
+      Alert.alert(
+        t('common.error'),
+        error.message || t('bluetooth.connectionFailed')
+      );
+    } finally {
+      setConnecting(null);
+    }
+  };
+
+  const handleDisconnect = async () => {
+    if (connectedDevice) {
+      try {
+        await bleManager.cancelDeviceConnection(connectedDevice.id);
+        setConnectedDevice(null);
+        
+        // Remove from backend
+        await removeDeviceFromBackend();
+        
+        Alert.alert(t('common.success'), t('bluetooth.disconnected'));
+      } catch (error) {
+        console.error('Disconnect error:', error);
+        setConnectedDevice(null);
+      }
+    }
+  };
+
+  const saveDeviceToBackend = async (device: BluetoothDevice) => {
+    try {
+      const token = await AsyncStorage.getItem('authToken');
+      if (token) {
+        await axios.post(`${API_URL}/api/ble/save-device?token=${token}`, {
+          device_id: device.id,
+          device_name: device.name || 'Unknown Device',
+        });
+        
+        setSavedDevice({
+          device_id: device.id,
+          device_name: device.name || 'Unknown Device',
+          connected_at: new Date().toISOString(),
+        });
+      }
+    } catch (error) {
+      console.error('Error saving device:', error);
+    }
+  };
+
+  const removeDeviceFromBackend = async () => {
+    try {
+      const token = await AsyncStorage.getItem('authToken');
+      if (token) {
+        await axios.delete(`${API_URL}/api/ble/remove-device?token=${token}`);
+        setSavedDevice(null);
+      }
+    } catch (error) {
+      console.error('Error removing device:', error);
+    }
+  };
+
+  const getRssiIcon = (rssi: number | null) => {
+    if (!rssi) return 'cellular-outline';
     if (rssi > -50) return 'wifi';
     if (rssi > -70) return 'wifi-outline';
     return 'cellular-outline';
   };
 
-  const getRssiColor = (rssi: number) => {
+  const getRssiColor = (rssi: number | null) => {
+    if (!rssi) return '#5a7a9a';
     if (rssi > -50) return '#4caf50';
     if (rssi > -70) return '#ffc107';
     return '#f44336';
   };
+
+  const getSignalQuality = (rssi: number | null) => {
+    if (!rssi) return t('bluetooth.unknown');
+    if (rssi > -50) return t('bluetooth.excellent');
+    if (rssi > -60) return t('bluetooth.good');
+    if (rssi > -70) return t('bluetooth.fair');
+    return t('bluetooth.weak');
+  };
+
+  if (loading) {
+    return (
+      <LinearGradient colors={['#0a1628', '#1a3a5c', '#0d2137']} style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#4fc3f7" />
+          <Text style={styles.loadingText}>{t('common.loading')}</Text>
+        </View>
+      </LinearGradient>
+    );
+  }
 
   return (
     <LinearGradient
@@ -102,7 +333,18 @@ export default function BluetoothSetupScreen() {
           <Ionicons name="arrow-back" size={24} color="#4fc3f7" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{t('bluetooth.setup')}</Text>
-        <View style={styles.headerRight} />
+        <View style={styles.headerRight}>
+          <View style={[
+            styles.bluetoothIndicator,
+            bluetoothState === State.PoweredOn ? styles.bluetoothOn : styles.bluetoothOff
+          ]}>
+            <Ionicons 
+              name="bluetooth" 
+              size={16} 
+              color={bluetoothState === State.PoweredOn ? '#4caf50' : '#f44336'} 
+            />
+          </View>
+        </View>
       </View>
 
       <ScrollView
@@ -126,7 +368,15 @@ export default function BluetoothSetupScreen() {
             {connectedDevice ? t('bluetooth.connected') : t('bluetooth.notConnected')}
           </Text>
           {connectedDevice && (
-            <Text style={styles.connectedDeviceName}>{connectedDevice.name}</Text>
+            <Text style={styles.connectedDeviceName}>
+              {connectedDevice.name || connectedDevice.id}
+            </Text>
+          )}
+          {bluetoothState !== State.PoweredOn && (
+            <View style={styles.bluetoothWarning}>
+              <Ionicons name="warning" size={16} color="#ffc107" />
+              <Text style={styles.warningText}>{t('bluetooth.turnOnBluetooth')}</Text>
+            </View>
           )}
         </View>
 
@@ -140,7 +390,15 @@ export default function BluetoothSetupScreen() {
             <View style={styles.connectedInfo}>
               <View style={styles.infoRow}>
                 <Text style={styles.infoLabel}>{t('bluetooth.deviceName')}</Text>
-                <Text style={styles.infoValue}>{connectedDevice.name}</Text>
+                <Text style={styles.infoValue}>
+                  {connectedDevice.name || 'Unknown'}
+                </Text>
+              </View>
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>ID</Text>
+                <Text style={styles.infoValueSmall} numberOfLines={1}>
+                  {connectedDevice.id}
+                </Text>
               </View>
               <View style={styles.infoRow}>
                 <Text style={styles.infoLabel}>{t('bluetooth.signalStrength')}</Text>
@@ -151,7 +409,7 @@ export default function BluetoothSetupScreen() {
                     color={getRssiColor(connectedDevice.rssi)}
                   />
                   <Text style={[styles.infoValue, { color: getRssiColor(connectedDevice.rssi) }]}>
-                    {connectedDevice.rssi} dBm
+                    {connectedDevice.rssi ? `${connectedDevice.rssi} dBm` : 'N/A'}
                   </Text>
                 </View>
               </View>
@@ -166,24 +424,38 @@ export default function BluetoothSetupScreen() {
           </View>
         )}
 
+        {/* Saved Device (from backend) */}
+        {savedDevice && !connectedDevice && (
+          <View style={styles.savedDeviceCard}>
+            <View style={styles.savedDeviceHeader}>
+              <Ionicons name="bookmark" size={20} color="#4fc3f7" />
+              <Text style={styles.savedDeviceTitle}>{t('bluetooth.savedDevice')}</Text>
+            </View>
+            <Text style={styles.savedDeviceName}>{savedDevice.device_name}</Text>
+            <Text style={styles.savedDeviceId}>{savedDevice.device_id}</Text>
+          </View>
+        )}
+
         {/* Scan Section */}
         <View style={styles.scanSection}>
           <Text style={styles.sectionTitle}>{t('bluetooth.availableDevices')}</Text>
           
           <TouchableOpacity
             style={styles.scanButton}
-            onPress={handleScan}
-            disabled={scanning}
+            onPress={scanning ? handleStopScan : handleScan}
+            disabled={bluetoothState !== State.PoweredOn}
             activeOpacity={0.8}
           >
             <LinearGradient
-              colors={scanning ? ['#5a7a9a', '#4a6a8a'] : ['#4fc3f7', '#0288d1']}
+              colors={scanning ? ['#f44336', '#d32f2f'] : 
+                      bluetoothState !== State.PoweredOn ? ['#5a7a9a', '#4a6a8a'] :
+                      ['#4fc3f7', '#0288d1']}
               style={styles.scanButtonGradient}
             >
               {scanning ? (
                 <>
                   <ActivityIndicator color="#fff" />
-                  <Text style={styles.scanButtonText}>{t('bluetooth.scanning')}</Text>
+                  <Text style={styles.scanButtonText}>{t('bluetooth.stopScan')}</Text>
                 </>
               ) : (
                 <>
@@ -194,31 +466,68 @@ export default function BluetoothSetupScreen() {
             </LinearGradient>
           </TouchableOpacity>
 
+          {scanning && (
+            <View style={styles.scanningInfo}>
+              <Text style={styles.scanningText}>
+                {t('bluetooth.foundDevices')}: {devices.length}
+              </Text>
+              <Text style={styles.scanningSubtext}>
+                {t('bluetooth.scanningFor')} 10s...
+              </Text>
+            </View>
+          )}
+
           {/* Devices List */}
           {devices.length > 0 ? (
             <View style={styles.devicesList}>
-              {devices.map((device) => (
+              {devices
+                .sort((a, b) => (b.rssi || -100) - (a.rssi || -100))
+                .map((device) => (
                 <TouchableOpacity
                   key={device.id}
-                  style={styles.deviceCard}
+                  style={[
+                    styles.deviceCard,
+                    connectedDevice?.id === device.id && styles.deviceCardConnected
+                  ]}
                   onPress={() => handleConnect(device)}
-                  disabled={connectedDevice?.id === device.id}
+                  disabled={connecting !== null || connectedDevice?.id === device.id}
                 >
                   <View style={styles.deviceIcon}>
-                    <Ionicons name="bluetooth" size={24} color="#4fc3f7" />
+                    {connecting === device.id ? (
+                      <ActivityIndicator color="#4fc3f7" />
+                    ) : (
+                      <Ionicons 
+                        name={connectedDevice?.id === device.id ? "bluetooth" : "bluetooth-outline"} 
+                        size={24} 
+                        color="#4fc3f7" 
+                      />
+                    )}
                   </View>
                   <View style={styles.deviceInfo}>
-                    <Text style={styles.deviceName}>{device.name}</Text>
+                    <Text style={styles.deviceName}>
+                      {device.name || t('bluetooth.unknownDevice')}
+                    </Text>
+                    <Text style={styles.deviceId} numberOfLines={1}>
+                      {device.id}
+                    </Text>
                     <View style={styles.deviceSignal}>
                       <Ionicons
                         name={getRssiIcon(device.rssi)}
                         size={14}
                         color={getRssiColor(device.rssi)}
                       />
-                      <Text style={styles.deviceRssi}>{device.rssi} dBm</Text>
+                      <Text style={[styles.deviceRssi, { color: getRssiColor(device.rssi) }]}>
+                        {device.rssi ? `${device.rssi} dBm` : 'N/A'} - {getSignalQuality(device.rssi)}
+                      </Text>
                     </View>
                   </View>
-                  <Ionicons name="chevron-forward" size={22} color="#5a7a9a" />
+                  {connectedDevice?.id === device.id ? (
+                    <View style={styles.connectedBadge}>
+                      <Ionicons name="checkmark-circle" size={24} color="#4caf50" />
+                    </View>
+                  ) : (
+                    <Ionicons name="chevron-forward" size={22} color="#5a7a9a" />
+                  )}
                 </TouchableOpacity>
               ))}
             </View>
@@ -264,6 +573,16 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  loadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loadingText: {
+    color: '#a8d4ff',
+    marginTop: 16,
+    fontSize: 16,
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -288,6 +607,20 @@ const styles = StyleSheet.create({
   },
   headerRight: {
     width: 44,
+    alignItems: 'flex-end',
+  },
+  bluetoothIndicator: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  bluetoothOn: {
+    backgroundColor: 'rgba(76, 175, 80, 0.2)',
+  },
+  bluetoothOff: {
+    backgroundColor: 'rgba(244, 67, 54, 0.2)',
   },
   scrollView: {
     flex: 1,
@@ -331,6 +664,20 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginTop: 4,
   },
+  bluetoothWarning: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 193, 7, 0.15)',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    marginTop: 12,
+    gap: 8,
+  },
+  warningText: {
+    color: '#ffc107',
+    fontSize: 12,
+  },
   connectedCard: {
     backgroundColor: 'rgba(76, 175, 80, 0.1)',
     borderRadius: 16,
@@ -368,6 +715,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
+  infoValueSmall: {
+    color: '#ffffff',
+    fontSize: 11,
+    fontWeight: '600',
+    maxWidth: 180,
+  },
   signalContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -387,6 +740,35 @@ const styles = StyleSheet.create({
     color: '#f44336',
     fontSize: 14,
     fontWeight: '600',
+  },
+  savedDeviceCard: {
+    backgroundColor: 'rgba(79, 195, 247, 0.1)',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(79, 195, 247, 0.3)',
+  },
+  savedDeviceHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 8,
+  },
+  savedDeviceTitle: {
+    color: '#4fc3f7',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  savedDeviceName: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  savedDeviceId: {
+    color: '#a8d4ff',
+    fontSize: 11,
+    marginTop: 4,
   },
   scanSection: {
     marginBottom: 24,
@@ -414,6 +796,20 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
   },
+  scanningInfo: {
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  scanningText: {
+    color: '#4fc3f7',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  scanningSubtext: {
+    color: '#a8d4ff',
+    fontSize: 12,
+    marginTop: 4,
+  },
   devicesList: {
     gap: 10,
   },
@@ -423,6 +819,11 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderRadius: 14,
     padding: 14,
+  },
+  deviceCardConnected: {
+    backgroundColor: 'rgba(76, 175, 80, 0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(76, 175, 80, 0.3)',
   },
   deviceIcon: {
     width: 44,
@@ -441,6 +842,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
+  deviceId: {
+    color: '#5a7a9a',
+    fontSize: 10,
+    marginTop: 2,
+  },
   deviceSignal: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -448,8 +854,10 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   deviceRssi: {
-    color: '#a8d4ff',
     fontSize: 12,
+  },
+  connectedBadge: {
+    marginLeft: 8,
   },
   emptyState: {
     alignItems: 'center',
