@@ -484,7 +484,7 @@ export default function BluetoothSetupScreen() {
           >
             <LinearGradient
               colors={scanning ? ['#f44336', '#d32f2f'] : 
-                      bluetoothState !== State.PoweredOn ? ['#5a7a9a', '#4a6a8a'] :
+                      (Platform.OS === 'web' || bluetoothState !== State.PoweredOn) ? ['#5a7a9a', '#4a6a8a'] :
                       ['#4fc3f7', '#0288d1']}
               style={styles.scanButtonGradient}
             >
