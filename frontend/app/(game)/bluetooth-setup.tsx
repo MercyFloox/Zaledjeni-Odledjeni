@@ -77,8 +77,8 @@ export default function BluetoothSetupScreen() {
 
   const initializeBluetooth = async () => {
     try {
-      // Check if we're on web platform
-      if (Platform.OS === 'web') {
+      // Check if we're on web platform or Expo Go
+      if (Platform.OS === 'web' || isExpoGo) {
         setBluetoothState(State.Unsupported);
         setLoading(false);
         return;
