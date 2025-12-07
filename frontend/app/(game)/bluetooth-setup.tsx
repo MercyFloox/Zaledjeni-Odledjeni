@@ -40,7 +40,15 @@ export default function BluetoothSetupScreen() {
   const insets = useSafeAreaInsets();
   const { t } = useLanguage();
   
-  const [bleManager] = useState(() => Platform.OS === 'web' ? null : new BleManager());
+  // Check if running in Expo Go
+  const isExpoGo = Constants.appOwnership === 'expo';
+  
+  const [bleManager] = useState<BleManager | null>(() => {
+    if (Platform.OS === 'web' || isExpoGo) {
+      return null;
+    }
+    return new BleManager();
+  });
   const [scanning, setScanning] = useState(false);
   const [devices, setDevices] = useState<BluetoothDevice[]>([]);
   const [connectedDevice, setConnectedDevice] = useState<BluetoothDevice | null>(null);
