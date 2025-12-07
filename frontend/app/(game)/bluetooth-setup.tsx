@@ -68,19 +68,28 @@ export default function BluetoothSetupScreen() {
 
   const initializeBluetooth = async () => {
     try {
+      // Check if we're on web platform
+      if (Platform.OS === 'web') {
+        setBluetoothState(State.Unsupported);
+        setLoading(false);
+        return;
+      }
+
       // Request permissions for Android
       if (Platform.OS === 'android') {
         await requestAndroidPermissions();
       }
 
       // Check Bluetooth state
-      const state = await bleManager.state();
-      setBluetoothState(state);
+      if (bleManager) {
+        const state = await bleManager.state();
+        setBluetoothState(state);
 
-      // Subscribe to Bluetooth state changes
-      bleManager.onStateChange((newState) => {
-        setBluetoothState(newState);
-      }, true);
+        // Subscribe to Bluetooth state changes
+        bleManager.onStateChange((newState) => {
+          setBluetoothState(newState);
+        }, true);
+      }
 
       setLoading(false);
     } catch (error) {
