@@ -244,6 +244,10 @@ export default {
     choosePlayerFreeze: 'Izaberi igrača za zamrzavanje (u pravoj igri ovo bi bilo automatski preko Bluetooth-a)',
     choosePlayerUnfreeze: 'Izaberi zaleđenog igrača za odleđivanje',
     testFreezeUnfreeze: 'Test zamrzni/odledi',
+    testFreezeTitle: 'Test Zamrzavanje',
+    testFreezeDescription: 'Testiraj animaciju zamrzavanja',
+    frozenEffect: 'ZAMRZNUT!',
+    unfreezing: 'Odmrzavanje...',
   },
 
   // Powers
