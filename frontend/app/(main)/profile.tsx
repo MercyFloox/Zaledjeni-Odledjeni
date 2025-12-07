@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
+  Modal,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -14,6 +15,7 @@ import { LinearGradient } from 'expo-linear-gradient/build/LinearGradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
+import { useLanguage } from '../../src/context/LanguageContext';
 
 const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL || '';
 
@@ -44,9 +46,11 @@ interface User {
 export default function ProfileScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { t, locale, setLocale, languages } = useLanguage();
   
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [languageModalVisible, setLanguageModalVisible] = useState(false);
 
   useEffect(() => {
     loadUser();
@@ -75,12 +79,12 @@ export default function ProfileScreen() {
 
   const handleLogout = () => {
     Alert.alert(
-      'Odjava',
-      'Da li ste sigurni da zelite da se odjavite?',
+      t('profile.logout'),
+      t('profile.logoutConfirm'),
       [
-        { text: 'Otkazi', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Odjavi se',
+          text: t('profile.logout'),
           style: 'destructive',
           onPress: async () => {
             await AsyncStorage.removeItem('authToken');
@@ -92,11 +96,21 @@ export default function ProfileScreen() {
     );
   };
 
+  const handleLanguageChange = async (langCode: string) => {
+    await setLocale(langCode);
+    setLanguageModalVisible(false);
+  };
+
   const getXpProgress = () => {
     if (!user?.stats) return 0;
     const xpForNextLevel = user.stats.level * 100;
     const currentLevelXp = user.stats.xp % xpForNextLevel;
     return (currentLevelXp / xpForNextLevel) * 100;
+  };
+
+  const getCurrentLanguage = () => {
+    const lang = languages.find(l => l.code === locale);
+    return lang ? `${lang.flag} ${lang.name}` : 'Srpski';
   };
 
   if (loading) {
@@ -138,7 +152,7 @@ export default function ProfileScreen() {
           {/* Level Progress */}
           <View style={styles.levelContainer}>
             <View style={styles.levelInfo}>
-              <Text style={styles.levelText}>Nivo {user?.stats?.level || 1}</Text>
+              <Text style={styles.levelText}>{t('leaderboard.level')} {user?.stats?.level || 1}</Text>
               <Text style={styles.xpText}>{user?.stats?.xp || 0} XP</Text>
             </View>
             <View style={styles.progressBar}>
@@ -152,65 +166,65 @@ export default function ProfileScreen() {
           <View style={styles.currencyCard}>
             <Ionicons name="logo-bitcoin" size={28} color="#ffd700" />
             <Text style={styles.currencyValue}>{user?.coins || 0}</Text>
-            <Text style={styles.currencyLabel}>Novcici</Text>
+            <Text style={styles.currencyLabel}>{t('profile.coins')}</Text>
           </View>
           <View style={styles.currencyCard}>
             <Ionicons name="diamond" size={28} color="#e040fb" />
             <Text style={styles.currencyValue}>{user?.gems || 0}</Text>
-            <Text style={styles.currencyLabel}>Dragulji</Text>
+            <Text style={styles.currencyLabel}>{t('profile.gems')}</Text>
           </View>
         </View>
 
         {/* Stats */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Statistika</Text>
+          <Text style={styles.sectionTitle}>{t('profile.stats')}</Text>
           <View style={styles.statsGrid}>
             <View style={styles.statCard}>
               <Ionicons name="game-controller" size={24} color="#4fc3f7" />
               <Text style={styles.statValue}>{user?.stats?.games_played || 0}</Text>
-              <Text style={styles.statLabel}>Odigrano</Text>
+              <Text style={styles.statLabel}>{t('profile.gamesPlayed')}</Text>
             </View>
             <View style={styles.statCard}>
               <Ionicons name="trophy" size={24} color="#ffd700" />
               <Text style={styles.statValue}>{user?.stats?.games_won || 0}</Text>
-              <Text style={styles.statLabel}>Pobeda</Text>
+              <Text style={styles.statLabel}>{t('profile.gamesWon')}</Text>
             </View>
             <View style={styles.statCard}>
               <Ionicons name="snow" size={24} color="#29b6f6" />
               <Text style={styles.statValue}>{user?.stats?.times_frozen || 0}</Text>
-              <Text style={styles.statLabel}>Zaledjen</Text>
+              <Text style={styles.statLabel}>{t('profile.timesFrozen')}</Text>
             </View>
             <View style={styles.statCard}>
               <Ionicons name="flame" size={24} color="#ff7043" />
               <Text style={styles.statValue}>{user?.stats?.times_unfrozen_others || 0}</Text>
-              <Text style={styles.statLabel}>Odledio</Text>
+              <Text style={styles.statLabel}>{t('profile.timesUnfrozen')}</Text>
             </View>
             <View style={styles.statCard}>
               <Ionicons name="skull" size={24} color="#ab47bc" />
               <Text style={styles.statValue}>{user?.stats?.times_as_mraz || 0}</Text>
-              <Text style={styles.statLabel}>Kao Mraz</Text>
+              <Text style={styles.statLabel}>{t('profile.timesAsMraz')}</Text>
             </View>
             <View style={styles.statCard}>
               <Ionicons name="time" size={24} color="#4caf50" />
               <Text style={styles.statValue}>{user?.stats?.longest_survival || 0}s</Text>
-              <Text style={styles.statLabel}>Rekord</Text>
+              <Text style={styles.statLabel}>{t('profile.record')}</Text>
             </View>
           </View>
         </View>
 
         {/* Inventory */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Inventar</Text>
+          <Text style={styles.sectionTitle}>{t('profile.inventory')}</Text>
           <View style={styles.inventoryCard}>
             <View style={styles.inventoryItem}>
               <Ionicons name="flash" size={22} color="#4fc3f7" />
-              <Text style={styles.inventoryText}>Moci</Text>
+              <Text style={styles.inventoryText}>{t('profile.powers')}</Text>
               <Text style={styles.inventoryCount}>{user?.owned_powers?.length || 0}</Text>
             </View>
             <View style={styles.inventorySeparator} />
             <View style={styles.inventoryItem}>
               <Ionicons name="color-palette" size={22} color="#e040fb" />
-              <Text style={styles.inventoryText}>Skinovi</Text>
+              <Text style={styles.inventoryText}>{t('profile.skins')}</Text>
               <Text style={styles.inventoryCount}>{user?.owned_skins?.length || 0}</Text>
             </View>
           </View>
@@ -218,21 +232,32 @@ export default function ProfileScreen() {
 
         {/* Actions */}
         <View style={styles.section}>
+          {/* Language Selection */}
+          <TouchableOpacity 
+            style={styles.actionButton}
+            onPress={() => setLanguageModalVisible(true)}
+          >
+            <Ionicons name="language-outline" size={22} color="#4fc3f7" />
+            <Text style={styles.actionText}>{t('profile.language')}</Text>
+            <Text style={styles.languageValue}>{getCurrentLanguage()}</Text>
+            <Ionicons name="chevron-forward" size={22} color="#5a7a9a" />
+          </TouchableOpacity>
+
           <TouchableOpacity style={styles.actionButton}>
             <Ionicons name="settings-outline" size={22} color="#a8d4ff" />
-            <Text style={styles.actionText}>Podesavanja</Text>
+            <Text style={styles.actionText}>{t('profile.settings')}</Text>
             <Ionicons name="chevron-forward" size={22} color="#5a7a9a" />
           </TouchableOpacity>
           
           <TouchableOpacity style={styles.actionButton}>
             <Ionicons name="help-circle-outline" size={22} color="#a8d4ff" />
-            <Text style={styles.actionText}>Pomoc</Text>
+            <Text style={styles.actionText}>{t('profile.help')}</Text>
             <Ionicons name="chevron-forward" size={22} color="#5a7a9a" />
           </TouchableOpacity>
           
           <TouchableOpacity style={styles.actionButton}>
             <Ionicons name="document-text-outline" size={22} color="#a8d4ff" />
-            <Text style={styles.actionText}>Uslovi koriscenja</Text>
+            <Text style={styles.actionText}>{t('profile.terms')}</Text>
             <Ionicons name="chevron-forward" size={22} color="#5a7a9a" />
           </TouchableOpacity>
           
@@ -241,11 +266,54 @@ export default function ProfileScreen() {
             onPress={handleLogout}
           >
             <Ionicons name="log-out-outline" size={22} color="#ef5350" />
-            <Text style={[styles.actionText, { color: '#ef5350' }]}>Odjavi se</Text>
+            <Text style={[styles.actionText, { color: '#ef5350' }]}>{t('profile.logout')}</Text>
             <Ionicons name="chevron-forward" size={22} color="#ef5350" />
           </TouchableOpacity>
         </View>
       </ScrollView>
+
+      {/* Language Selection Modal */}
+      <Modal
+        visible={languageModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setLanguageModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>{t('profile.selectLanguage')}</Text>
+            
+            {languages.map((lang) => (
+              <TouchableOpacity
+                key={lang.code}
+                style={[
+                  styles.languageOption,
+                  locale === lang.code && styles.languageOptionActive
+                ]}
+                onPress={() => handleLanguageChange(lang.code)}
+              >
+                <Text style={styles.languageFlag}>{lang.flag}</Text>
+                <Text style={[
+                  styles.languageName,
+                  locale === lang.code && styles.languageNameActive
+                ]}>
+                  {lang.name}
+                </Text>
+                {locale === lang.code && (
+                  <Ionicons name="checkmark-circle" size={24} color="#4fc3f7" />
+                )}
+              </TouchableOpacity>
+            ))}
+
+            <TouchableOpacity
+              style={styles.modalCloseButton}
+              onPress={() => setLanguageModalVisible(false)}
+            >
+              <Text style={styles.modalCloseText}>{t('common.close')}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </LinearGradient>
   );
 }
@@ -438,8 +506,74 @@ const styles = StyleSheet.create({
     color: '#a8d4ff',
     fontSize: 16,
   },
+  languageValue: {
+    color: '#4fc3f7',
+    fontSize: 14,
+    marginRight: 8,
+  },
   logoutButton: {
     marginTop: 8,
     backgroundColor: 'rgba(239, 83, 80, 0.1)',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    width: '100%',
+    backgroundColor: '#0d2137',
+    borderRadius: 24,
+    padding: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(79, 195, 247, 0.3)',
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#ffffff',
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  languageOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  languageOptionActive: {
+    backgroundColor: 'rgba(79, 195, 247, 0.15)',
+    borderWidth: 1,
+    borderColor: '#4fc3f7',
+  },
+  languageFlag: {
+    fontSize: 28,
+    marginRight: 16,
+  },
+  languageName: {
+    flex: 1,
+    color: '#a8d4ff',
+    fontSize: 18,
+  },
+  languageNameActive: {
+    color: '#4fc3f7',
+    fontWeight: '600',
+  },
+  modalCloseButton: {
+    marginTop: 16,
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(79, 195, 247, 0.3)',
+    alignItems: 'center',
+  },
+  modalCloseText: {
+    color: '#a8d4ff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

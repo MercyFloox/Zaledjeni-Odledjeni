@@ -11,12 +11,14 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient/build/LinearGradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useLanguage } from '../src/context/LanguageContext';
 
 const { width, height } = Dimensions.get('window');
 
 export default function WelcomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { t } = useLanguage();
   
   // Animations
   const snowflakeAnim = useRef(new Animated.Value(0)).current;
@@ -139,25 +141,25 @@ export default function WelcomeScreen() {
             },
           ]}
         >
-          <Text style={styles.title}>ZALEDJEN</Text>
+          <Text style={styles.title}>{t('welcome.title1')}</Text>
           <Text style={styles.titleDivider}>-</Text>
-          <Text style={styles.titleSecond}>ODLEDJEN</Text>
-          <Text style={styles.subtitle}>Decija igra zamrzavanja</Text>
+          <Text style={styles.titleSecond}>{t('welcome.title2')}</Text>
+          <Text style={styles.subtitle}>{t('welcome.subtitle')}</Text>
         </Animated.View>
 
         {/* Features */}
         <View style={styles.featuresContainer}>
           <View style={styles.featureItem}>
             <Ionicons name="people" size={20} color="#4fc3f7" />
-            <Text style={styles.featureText}>Vise igraca</Text>
+            <Text style={styles.featureText}>{t('welcome.features.multiplayer')}</Text>
           </View>
           <View style={styles.featureItem}>
             <Ionicons name="bluetooth" size={20} color="#4fc3f7" />
-            <Text style={styles.featureText}>Bluetooth dodir</Text>
+            <Text style={styles.featureText}>{t('welcome.features.bluetooth')}</Text>
           </View>
           <View style={styles.featureItem}>
             <Ionicons name="trophy" size={20} color="#4fc3f7" />
-            <Text style={styles.featureText}>Rangiranje</Text>
+            <Text style={styles.featureText}>{t('welcome.features.ranking')}</Text>
           </View>
         </View>
       </View>
@@ -191,7 +193,7 @@ export default function WelcomeScreen() {
             style={styles.buttonGradient}
           >
             <Ionicons name="log-in-outline" size={24} color="#fff" />
-            <Text style={styles.primaryButtonText}>Prijavi se</Text>
+            <Text style={styles.primaryButtonText}>{t('welcome.login')}</Text>
           </LinearGradient>
         </TouchableOpacity>
 
@@ -201,12 +203,12 @@ export default function WelcomeScreen() {
           activeOpacity={0.8}
         >
           <Ionicons name="person-add-outline" size={24} color="#4fc3f7" />
-          <Text style={styles.secondaryButtonText}>Registruj se</Text>
+          <Text style={styles.secondaryButtonText}>{t('welcome.register')}</Text>
         </TouchableOpacity>
       </Animated.View>
 
       {/* Footer */}
-      <Text style={styles.footer}>Verzija 1.0.0</Text>
+      <Text style={styles.footer}>{t('common.version')} 1.0.0</Text>
     </LinearGradient>
   );
 }
