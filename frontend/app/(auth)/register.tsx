@@ -17,12 +17,14 @@ import { LinearGradient } from 'expo-linear-gradient/build/LinearGradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
+import { useLanguage } from '../../src/context/LanguageContext';
 
 const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL || '';
 
 export default function RegisterScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { t } = useLanguage();
   
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
@@ -33,17 +35,17 @@ export default function RegisterScreen() {
 
   const handleRegister = async () => {
     if (!username || !email || !password || !confirmPassword) {
-      Alert.alert('Greska', 'Molimo popunite sva polja');
+      Alert.alert(t('common.error'), t('auth.errors.fillAll'));
       return;
     }
 
     if (password !== confirmPassword) {
-      Alert.alert('Greska', 'Lozinke se ne poklapaju');
+      Alert.alert(t('common.error'), t('auth.errors.passwordMismatch'));
       return;
     }
 
     if (password.length < 6) {
-      Alert.alert('Greska', 'Lozinka mora imati najmanje 6 karaktera');
+      Alert.alert(t('common.error'), t('auth.errors.passwordLength'));
       return;
     }
 
@@ -57,16 +59,15 @@ export default function RegisterScreen() {
 
       const { token, user } = response.data;
       
-      // Save token and user
       await AsyncStorage.setItem('authToken', token);
       await AsyncStorage.setItem('user', JSON.stringify(user));
       
-      Alert.alert('Uspeh!', 'Uspesno ste se registrovali!', [
+      Alert.alert(t('common.success'), t('auth.registerSuccess'), [
         { text: 'OK', onPress: () => router.replace('/(main)/home') }
       ]);
     } catch (error: any) {
-      const message = error.response?.data?.detail || 'Greska pri registraciji';
-      Alert.alert('Greska', message);
+      const message = error.response?.data?.detail || t('auth.errors.registerFailed');
+      Alert.alert(t('common.error'), message);
     } finally {
       setLoading(false);
     }
@@ -88,7 +89,6 @@ export default function RegisterScreen() {
           ]}
           keyboardShouldPersistTaps="handled"
         >
-          {/* Back Button */}
           <TouchableOpacity
             style={styles.backButton}
             onPress={() => router.back()}
@@ -96,22 +96,20 @@ export default function RegisterScreen() {
             <Ionicons name="arrow-back" size={24} color="#4fc3f7" />
           </TouchableOpacity>
 
-          {/* Header */}
           <View style={styles.header}>
             <View style={styles.iconContainer}>
               <Ionicons name="person-add" size={50} color="#4fc3f7" />
             </View>
-            <Text style={styles.title}>Kreiraj nalog</Text>
-            <Text style={styles.subtitle}>Pridruzi se hiljadama igraca!</Text>
+            <Text style={styles.title}>{t('auth.createAccount')}</Text>
+            <Text style={styles.subtitle}>{t('auth.joinPlayers')}</Text>
           </View>
 
-          {/* Form */}
           <View style={styles.form}>
             <View style={styles.inputContainer}>
               <Ionicons name="person-outline" size={22} color="#4fc3f7" style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
-                placeholder="Korisnicko ime"
+                placeholder={t('auth.username')}
                 placeholderTextColor="#5a7a9a"
                 value={username}
                 onChangeText={setUsername}
@@ -124,7 +122,7 @@ export default function RegisterScreen() {
               <Ionicons name="mail-outline" size={22} color="#4fc3f7" style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
-                placeholder="Email adresa"
+                placeholder={t('auth.email')}
                 placeholderTextColor="#5a7a9a"
                 value={email}
                 onChangeText={setEmail}
@@ -138,7 +136,7 @@ export default function RegisterScreen() {
               <Ionicons name="lock-closed-outline" size={22} color="#4fc3f7" style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
-                placeholder="Lozinka"
+                placeholder={t('auth.password')}
                 placeholderTextColor="#5a7a9a"
                 value={password}
                 onChangeText={setPassword}
@@ -160,7 +158,7 @@ export default function RegisterScreen() {
               <Ionicons name="lock-closed-outline" size={22} color="#4fc3f7" style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
-                placeholder="Potvrdi lozinku"
+                placeholder={t('auth.confirmPassword')}
                 placeholderTextColor="#5a7a9a"
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
@@ -184,7 +182,7 @@ export default function RegisterScreen() {
                   <ActivityIndicator color="#fff" />
                 ) : (
                   <>
-                    <Text style={styles.registerButtonText}>Registruj se</Text>
+                    <Text style={styles.registerButtonText}>{t('auth.registerButton')}</Text>
                     <Ionicons name="arrow-forward" size={22} color="#fff" />
                   </>
                 )}
@@ -192,11 +190,10 @@ export default function RegisterScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* Footer */}
           <View style={styles.footer}>
-            <Text style={styles.footerText}>Vec imate nalog?</Text>
+            <Text style={styles.footerText}>{t('auth.hasAccount')}</Text>
             <TouchableOpacity onPress={() => router.replace('/(auth)/login')}>
-              <Text style={styles.loginLink}>Prijavite se</Text>
+              <Text style={styles.loginLink}>{t('auth.loginLink')}</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>

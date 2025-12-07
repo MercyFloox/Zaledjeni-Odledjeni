@@ -1,11 +1,12 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { View, StyleSheet, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useLanguage } from '../../src/context/LanguageContext';
 
 export default function MainLayout() {
   const insets = useSafeAreaInsets();
+  const { t } = useLanguage();
 
   return (
     <Tabs
@@ -30,7 +31,7 @@ export default function MainLayout() {
       <Tabs.Screen
         name="home"
         options={{
-          title: 'Igraj',
+          title: t('welcome.login').split(' ')[0] === 'Sign' ? 'Play' : 'Igraj',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="game-controller" size={size} color={color} />
           ),
@@ -39,7 +40,7 @@ export default function MainLayout() {
       <Tabs.Screen
         name="shop"
         options={{
-          title: 'Prodavnica',
+          title: t('shop.title'),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="cart" size={size} color={color} />
           ),
@@ -48,7 +49,7 @@ export default function MainLayout() {
       <Tabs.Screen
         name="leaderboard"
         options={{
-          title: 'Rang',
+          title: t('leaderboard.title').substring(0, 4),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="trophy" size={size} color={color} />
           ),
@@ -57,7 +58,7 @@ export default function MainLayout() {
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Profil',
+          title: t('profile.settings').split(' ')[0] === 'Settings' ? 'Profile' : 'Profil',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="person" size={size} color={color} />
           ),
@@ -66,5 +67,3 @@ export default function MainLayout() {
     </Tabs>
   );
 }
-
-const styles = StyleSheet.create({});

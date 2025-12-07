@@ -17,12 +17,14 @@ import { LinearGradient } from 'expo-linear-gradient/build/LinearGradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
+import { useLanguage } from '../../src/context/LanguageContext';
 
 const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL || '';
 
 export default function LoginScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { t } = useLanguage();
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -31,7 +33,7 @@ export default function LoginScreen() {
 
   const handleLogin = async () => {
     if (!email || !password) {
-      Alert.alert('Greska', 'Molimo unesite email i lozinku');
+      Alert.alert(t('common.error'), t('auth.errors.emailPassword'));
       return;
     }
 
@@ -44,15 +46,13 @@ export default function LoginScreen() {
 
       const { token, user } = response.data;
       
-      // Save token and user
       await AsyncStorage.setItem('authToken', token);
       await AsyncStorage.setItem('user', JSON.stringify(user));
       
-      // Navigate to main app
       router.replace('/(main)/home');
     } catch (error: any) {
-      const message = error.response?.data?.detail || 'Greska pri prijavi';
-      Alert.alert('Greska', message);
+      const message = error.response?.data?.detail || t('auth.errors.loginFailed');
+      Alert.alert(t('common.error'), message);
     } finally {
       setLoading(false);
     }
@@ -74,7 +74,6 @@ export default function LoginScreen() {
           ]}
           keyboardShouldPersistTaps="handled"
         >
-          {/* Back Button */}
           <TouchableOpacity
             style={styles.backButton}
             onPress={() => router.back()}
@@ -82,22 +81,20 @@ export default function LoginScreen() {
             <Ionicons name="arrow-back" size={24} color="#4fc3f7" />
           </TouchableOpacity>
 
-          {/* Header */}
           <View style={styles.header}>
             <View style={styles.iconContainer}>
               <Ionicons name="snow" size={50} color="#4fc3f7" />
             </View>
-            <Text style={styles.title}>Dobrodosli nazad!</Text>
-            <Text style={styles.subtitle}>Prijavite se da nastavite igru</Text>
+            <Text style={styles.title}>{t('auth.welcomeBack')}</Text>
+            <Text style={styles.subtitle}>{t('auth.loginSubtitle')}</Text>
           </View>
 
-          {/* Form */}
           <View style={styles.form}>
             <View style={styles.inputContainer}>
               <Ionicons name="mail-outline" size={22} color="#4fc3f7" style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
-                placeholder="Email adresa"
+                placeholder={t('auth.email')}
                 placeholderTextColor="#5a7a9a"
                 value={email}
                 onChangeText={setEmail}
@@ -111,7 +108,7 @@ export default function LoginScreen() {
               <Ionicons name="lock-closed-outline" size={22} color="#4fc3f7" style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
-                placeholder="Lozinka"
+                placeholder={t('auth.password')}
                 placeholderTextColor="#5a7a9a"
                 value={password}
                 onChangeText={setPassword}
@@ -130,7 +127,7 @@ export default function LoginScreen() {
             </View>
 
             <TouchableOpacity style={styles.forgotPassword}>
-              <Text style={styles.forgotPasswordText}>Zaboravili ste lozinku?</Text>
+              <Text style={styles.forgotPasswordText}>{t('auth.forgotPassword')}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -149,7 +146,7 @@ export default function LoginScreen() {
                   <ActivityIndicator color="#fff" />
                 ) : (
                   <>
-                    <Text style={styles.loginButtonText}>Prijavi se</Text>
+                    <Text style={styles.loginButtonText}>{t('auth.loginButton')}</Text>
                     <Ionicons name="arrow-forward" size={22} color="#fff" />
                   </>
                 )}
@@ -157,11 +154,10 @@ export default function LoginScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* Footer */}
           <View style={styles.footer}>
-            <Text style={styles.footerText}>Nemate nalog?</Text>
+            <Text style={styles.footerText}>{t('auth.noAccount')}</Text>
             <TouchableOpacity onPress={() => router.replace('/(auth)/register')}>
-              <Text style={styles.registerLink}>Registrujte se</Text>
+              <Text style={styles.registerLink}>{t('auth.registerLink')}</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
