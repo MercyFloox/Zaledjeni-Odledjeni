@@ -98,6 +98,11 @@ export default {
       joinFailed: 'Failed to join room',
       roomNotFound: 'Room not found',
     },
+    bleStatus: 'BLE Glove',
+    bleConnected: 'Connected',
+    bleNotConnected: 'Not Connected',
+    bleSetup: 'Setup Glove',
+    testFreeze: 'Test Freeze',
   },
 
   // Shop
@@ -239,6 +244,10 @@ export default {
     choosePlayerFreeze: 'Choose player to freeze (in real game this would be automatic via Bluetooth)',
     choosePlayerUnfreeze: 'Choose frozen player to unfreeze',
     testFreezeUnfreeze: 'Test freeze/unfreeze',
+    testFreezeTitle: 'Test Freeze',
+    testFreezeDescription: 'Test the freeze animation',
+    frozenEffect: 'FROZEN!',
+    unfreezing: 'Unfreezing...',
   },
 
   // Powers
@@ -347,5 +356,19 @@ export default {
     instruction1: 'Turn on the BLE sensor on your glove',
     instruction2: 'Press "Scan devices" to find your sensor',
     instruction3: 'Select your sensor from the list and connect',
+    bluetoothOff: 'Bluetooth off',
+    turnOnBluetooth: 'Please turn on Bluetooth on your device',
+    stopScan: 'Stop scanning',
+    foundDevices: 'Found devices',
+    scanningFor: 'Scanning for',
+    unknownDevice: 'Unknown device',
+    unknown: 'Unknown',
+    excellent: 'Excellent',
+    good: 'Good',
+    fair: 'Fair',
+    weak: 'Weak',
+    savedDevice: 'Saved device',
+    deviceDisconnected: 'Device disconnected',
+    connectionFailed: 'Connection failed',
   },
 };
