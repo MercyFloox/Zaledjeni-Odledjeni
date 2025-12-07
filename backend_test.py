@@ -202,17 +202,26 @@ def test_freeze_endpoint_scenarios(token, has_ble_device):
     try:
         no_token_response = requests.post(f"{BACKEND_URL}/game/freeze-test", timeout=10)
         
-        if no_token_response.status_code == 401:
-            results.add_result(
-                "Freeze Test - No Token",
-                True,
-                "Correctly rejected request without token (401 Unauthorized)"
-            )
+        if no_token_response.status_code == 422:
+            # FastAPI returns 422 for missing required query parameters
+            data = no_token_response.json()
+            if "token" in str(data.get("detail", [])):
+                results.add_result(
+                    "Freeze Test - No Token",
+                    True,
+                    "Correctly rejected request without token (422 Validation Error)"
+                )
+            else:
+                results.add_result(
+                    "Freeze Test - No Token",
+                    False,
+                    f"Got 422 but wrong validation error: {no_token_response.text}"
+                )
         else:
             results.add_result(
                 "Freeze Test - No Token",
                 False,
-                f"Expected 401, got {no_token_response.status_code}: {no_token_response.text}"
+                f"Expected 422, got {no_token_response.status_code}: {no_token_response.text}"
             )
     except Exception as e:
         results.add_result("Freeze Test - No Token", False, f"Request failed: {e}")
