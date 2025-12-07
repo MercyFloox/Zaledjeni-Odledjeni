@@ -424,13 +424,13 @@ export default function HomeScreen() {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Kreiraj Novu Sobu</Text>
+            <Text style={styles.modalTitle}>{t('home.createRoomModal.title')}</Text>
             
             <View style={styles.modalInput}>
               <Ionicons name="text" size={22} color="#4fc3f7" />
               <TextInput
                 style={styles.modalTextInput}
-                placeholder="Ime sobe"
+                placeholder={t('home.createRoomModal.roomName')}
                 placeholderTextColor="#5a7a9a"
                 value={roomName}
                 onChangeText={setRoomName}
@@ -447,7 +447,7 @@ export default function HomeScreen() {
                 color={isPrivate ? '#ff7043' : '#4fc3f7'}
               />
               <Text style={styles.privateText}>
-                {isPrivate ? 'Privatna soba' : 'Javna soba'}
+                {isPrivate ? t('home.createRoomModal.private') : t('home.createRoomModal.public')}
               </Text>
             </TouchableOpacity>
 
@@ -456,7 +456,7 @@ export default function HomeScreen() {
                 style={styles.modalCancelButton}
                 onPress={() => setCreateModalVisible(false)}
               >
-                <Text style={styles.modalCancelText}>Otkazi</Text>
+                <Text style={styles.modalCancelText}>{t('common.cancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.modalConfirmButton}
@@ -466,7 +466,7 @@ export default function HomeScreen() {
                 {creating ? (
                   <ActivityIndicator color="#fff" />
                 ) : (
-                  <Text style={styles.modalConfirmText}>Kreiraj</Text>
+                  <Text style={styles.modalConfirmText}>{t('home.createRoomModal.create')}</Text>
                 )}
               </TouchableOpacity>
             </View>
@@ -483,13 +483,13 @@ export default function HomeScreen() {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Pridruzi se Sobi</Text>
+            <Text style={styles.modalTitle}>{t('home.joinRoomModal.title')}</Text>
             
             <View style={styles.modalInput}>
               <Ionicons name="key" size={22} color="#4fc3f7" />
               <TextInput
                 style={styles.modalTextInput}
-                placeholder="Unesi kod sobe (npr. ABC123)"
+                placeholder={t('home.joinRoomModal.enterCode')}
                 placeholderTextColor="#5a7a9a"
                 value={roomCode}
                 onChangeText={setRoomCode}
@@ -503,7 +503,7 @@ export default function HomeScreen() {
                 style={styles.modalCancelButton}
                 onPress={() => setJoinModalVisible(false)}
               >
-                <Text style={styles.modalCancelText}>Otkazi</Text>
+                <Text style={styles.modalCancelText}>{t('common.cancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.modalConfirmButton, { backgroundColor: '#ff7043' }]}
@@ -513,7 +513,7 @@ export default function HomeScreen() {
                 {joining ? (
                   <ActivityIndicator color="#fff" />
                 ) : (
-                  <Text style={styles.modalConfirmText}>Pridruzi se</Text>
+                  <Text style={styles.modalConfirmText}>{t('home.joinRoomModal.join')}</Text>
                 )}
               </TouchableOpacity>
             </View>
