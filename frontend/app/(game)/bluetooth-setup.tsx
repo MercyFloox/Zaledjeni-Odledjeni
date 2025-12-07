@@ -59,8 +59,10 @@ export default function BluetoothSetupScreen() {
       if (scanTimeoutRef.current) {
         clearTimeout(scanTimeoutRef.current);
       }
-      bleManager.stopDeviceScan();
-      bleManager.destroy();
+      if (bleManager) {
+        bleManager.stopDeviceScan();
+        bleManager.destroy();
+      }
     };
   }, []);
 
