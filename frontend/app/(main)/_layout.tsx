@@ -6,7 +6,7 @@ import { useLanguage } from '../../src/context/LanguageContext';
 
 export default function MainLayout() {
   const insets = useSafeAreaInsets();
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
 
   return (
     <Tabs
@@ -23,7 +23,7 @@ export default function MainLayout() {
         tabBarActiveTintColor: '#4fc3f7',
         tabBarInactiveTintColor: '#5a7a9a',
         tabBarLabelStyle: {
-          fontSize: 12,
+          fontSize: 11,
           fontWeight: '600',
         },
       }}
@@ -31,9 +31,18 @@ export default function MainLayout() {
       <Tabs.Screen
         name="home"
         options={{
-          title: t('welcome.login').split(' ')[0] === 'Sign' ? 'Play' : 'Igraj',
+          title: locale === 'en' ? 'Play' : locale === 'sr' ? 'Igraj' : 'Play',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="game-controller" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="gloves"
+        options={{
+          title: locale === 'en' ? 'Gloves' : locale === 'sr' ? 'Rukavice' : 'Gloves',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="hand-left" size={size} color={color} />
           ),
         }}
       />
@@ -49,7 +58,7 @@ export default function MainLayout() {
       <Tabs.Screen
         name="leaderboard"
         options={{
-          title: t('leaderboard.title').substring(0, 4),
+          title: locale === 'en' ? 'Rank' : locale === 'sr' ? 'Rang' : 'Rank',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="trophy" size={size} color={color} />
           ),
@@ -58,7 +67,7 @@ export default function MainLayout() {
       <Tabs.Screen
         name="profile"
         options={{
-          title: t('profile.settings').split(' ')[0] === 'Settings' ? 'Profile' : 'Profil',
+          title: locale === 'en' ? 'Profile' : locale === 'sr' ? 'Profil' : 'Profile',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="person" size={size} color={color} />
           ),
