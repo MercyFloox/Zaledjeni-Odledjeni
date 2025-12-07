@@ -235,8 +235,8 @@ export default function HomeScreen() {
         {/* Header */}
         <View style={styles.header}>
           <View>
-            <Text style={styles.greeting}>Zdravo, {user?.username || 'Igrac'}!</Text>
-            <Text style={styles.subGreeting}>Spreman za igru?</Text>
+            <Text style={styles.greeting}>{t('home.greeting')}, {user?.username || 'Igrac'}!</Text>
+            <Text style={styles.subGreeting}>{t('home.readyToPlay')}</Text>
           </View>
           <View style={styles.currencyContainer}>
             <View style={styles.currencyItem}>
