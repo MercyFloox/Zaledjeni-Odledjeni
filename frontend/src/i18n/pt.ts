@@ -294,7 +294,6 @@ export default {
     fr: 'Français',
     pt: 'Português (Brasil)',
   },
-};
 
   // Smart Gloves
   gloves: {
@@ -349,3 +348,4 @@ export default {
     instruction2: 'Press Scan devices',
     instruction3: 'Select and connect',
   },
+};
