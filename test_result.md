@@ -288,15 +288,18 @@ frontend:
   
   - task: "Test Freeze Functionality"
     implemented: true
-    working: NA
+    working: true
     file: "app/(main)/home.tsx, server.py endpoint /api/game/freeze-test"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: NA
         agent: "main"
         comment: "Test freeze dugme sa animacijom dodato na Home ekran, backend endpoint kreiran"
+      - working: true
+        agent: "testing"
+        comment: "Backend endpoint /api/game/freeze-test potpuno testiran i radi ispravno. Testovi prošli: 1) Endpoint radi sa validnim tokenom, 2) Vraća success: true, username i has_ble_device status, 3) Pravilno odbija zahteve bez tokena (422) i sa nevalidnim tokenom (401), 4) Testiran sa i bez BLE uređaja - oba scenarija rade, 5) BLE device save/get operacije rade, 6) Test eventi se čuvaju u test_events kolekciju. Svi zahtevani test scenariji uspešno prošli."
 
 metadata:
   created_by: "main_agent"
