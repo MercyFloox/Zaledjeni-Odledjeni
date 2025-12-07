@@ -321,3 +321,5 @@ agent_communication:
     message: "MVP implementiran sa svim osnovnim funkcionalnostima - auth, shop, premium, game mehanika"
   - agent: "main"
     message: "Implementirane BLE funkcionalnosti: 1) BLE status kartica na Home ekranu sa prikazom povezanog uređaja i linkom ka Bluetooth Setup; 2) Test Freeze dugme sa animacijom i backend endpoint POST /api/game/freeze-test; 3) Dopunjeni prevodi za Bluetooth Setup u svim jezicima (sr, en, es, de, fr, pt). Spremno za backend testiranje."
+  - agent: "testing"
+    message: "Backend testiranje završeno uspešno. Test Freeze funkcionalnost potpuno radi - endpoint /api/game/freeze-test testiran u svim scenarijima (sa/bez BLE uređaja, validni/nevalidni tokeni). Svi zahtevani test scenariji prošli. Detektovan minor issue sa /api/rooms/public endpoint (ObjectId serialization), ali ne utiče na Test Freeze funkcionalnost. Kreiran backend_test.py za buduće testiranje."
