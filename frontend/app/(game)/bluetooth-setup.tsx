@@ -143,7 +143,7 @@ export default function BluetoothSetupScreen() {
   };
 
   const handleScan = async () => {
-    if (bluetoothState !== State.PoweredOn) {
+    if (!bleManager || bluetoothState !== State.PoweredOn) {
       Alert.alert(
         t('bluetooth.bluetoothOff'),
         t('bluetooth.turnOnBluetooth'),
@@ -187,7 +187,9 @@ export default function BluetoothSetupScreen() {
 
     // Stop scanning after 10 seconds
     scanTimeoutRef.current = setTimeout(() => {
-      bleManager.stopDeviceScan();
+      if (bleManager) {
+        bleManager.stopDeviceScan();
+      }
       setScanning(false);
     }, 10000);
   };
