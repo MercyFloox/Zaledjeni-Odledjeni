@@ -205,6 +205,14 @@ export default function BluetoothSetupScreen() {
   };
 
   const handleConnect = async (device: BluetoothDevice) => {
+    if (!bleManager) {
+      Alert.alert(
+        t('common.error'),
+        t('bluetooth.notAvailable')
+      );
+      return;
+    }
+
     try {
       setConnecting(device.id);
       
