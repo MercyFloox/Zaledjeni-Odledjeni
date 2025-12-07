@@ -264,7 +264,7 @@ export default function BluetoothSetupScreen() {
   };
 
   const handleDisconnect = async () => {
-    if (connectedDevice) {
+    if (connectedDevice && bleManager) {
       try {
         await bleManager.cancelDeviceConnection(connectedDevice.id);
         setConnectedDevice(null);
