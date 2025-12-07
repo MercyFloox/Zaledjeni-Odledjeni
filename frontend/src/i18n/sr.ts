@@ -1,0 +1,297 @@
+export default {
+  // Common
+  common: {
+    loading: 'Učitavanje...',
+    error: 'Greška',
+    success: 'Uspeh',
+    cancel: 'Otkaži',
+    confirm: 'Potvrdi',
+    save: 'Sačuvaj',
+    delete: 'Obriši',
+    back: 'Nazad',
+    next: 'Dalje',
+    yes: 'Da',
+    no: 'Ne',
+    ok: 'OK',
+    close: 'Zatvori',
+    search: 'Pretraži',
+    settings: 'Podešavanja',
+    help: 'Pomoć',
+    version: 'Verzija',
+  },
+
+  // Welcome Screen
+  welcome: {
+    title1: 'ZALEDJEN',
+    title2: 'ODLEDJEN',
+    subtitle: 'Dečija igra zamrzavanja',
+    login: 'Prijavi se',
+    register: 'Registruj se',
+    features: {
+      multiplayer: 'Više igrača',
+      bluetooth: 'Bluetooth dodir',
+      ranking: 'Rangiranje',
+    },
+  },
+
+  // Auth
+  auth: {
+    welcomeBack: 'Dobrodošli nazad!',
+    loginSubtitle: 'Prijavite se da nastavite igru',
+    createAccount: 'Kreiraj nalog',
+    joinPlayers: 'Pridruži se hiljadama igrača!',
+    email: 'Email adresa',
+    password: 'Lozinka',
+    confirmPassword: 'Potvrdi lozinku',
+    username: 'Korisničko ime',
+    forgotPassword: 'Zaboravili ste lozinku?',
+    noAccount: 'Nemate nalog?',
+    hasAccount: 'Već imate nalog?',
+    loginButton: 'Prijavi se',
+    registerButton: 'Registruj se',
+    loginLink: 'Prijavite se',
+    registerLink: 'Registrujte se',
+    errors: {
+      fillAll: 'Molimo popunite sva polja',
+      emailPassword: 'Molimo unesite email i lozinku',
+      passwordMismatch: 'Lozinke se ne poklapaju',
+      passwordLength: 'Lozinka mora imati najmanje 6 karaktera',
+      loginFailed: 'Greška pri prijavi',
+      registerFailed: 'Greška pri registraciji',
+    },
+    registerSuccess: 'Uspešno ste se registrovali!',
+  },
+
+  // Home
+  home: {
+    greeting: 'Zdravo',
+    readyToPlay: 'Spreman za igru?',
+    createRoom: 'Kreiraj Sobu',
+    joinRoom: 'Pridruži se',
+    howToPlay: 'Kako se igra?',
+    publicRooms: 'Javne Sobe',
+    noRooms: 'Nema aktivnih javnih soba',
+    createYourRoom: 'Kreiraj svoju sobu!',
+    roomCode: 'Kod',
+    steps: {
+      step1: '"Mraz" juri ostale igrače',
+      step2: 'Dodirom rukavica igrač se zamrzava',
+      step3: 'Drugi igrači mogu da odlede zamrznutog',
+      step4: 'Igra se završava kada su svi zaleđeni!',
+    },
+    createRoomModal: {
+      title: 'Kreiraj Novu Sobu',
+      roomName: 'Ime sobe',
+      private: 'Privatna soba',
+      public: 'Javna soba',
+      create: 'Kreiraj',
+    },
+    joinRoomModal: {
+      title: 'Pridruži se Sobi',
+      enterCode: 'Unesi kod sobe (npr. ABC123)',
+      join: 'Pridruži se',
+    },
+    errors: {
+      enterRoomName: 'Unesite ime sobe',
+      enterRoomCode: 'Unesite kod sobe',
+      createFailed: 'Greška pri kreiranju sobe',
+      joinFailed: 'Greška pri pridruživanju',
+      roomNotFound: 'Soba nije pronađena',
+    },
+  },
+
+  // Shop
+  shop: {
+    title: 'Prodavnica',
+    tabs: {
+      powers: 'Moći',
+      skins: 'Skinovi',
+      premium: 'Premium',
+    },
+    purchased: 'Kupljeno',
+    rarity: {
+      common: 'OBIČNO',
+      rare: 'RETKO',
+      epic: 'EPSKO',
+      legendary: 'LEGENDARNO',
+    },
+    confirmPurchase: 'Potvrdi kupovinu',
+    purchaseQuestion: 'Da li želite da kupite {item} za {price} {currency}?',
+    buy: 'Kupi',
+    currencies: {
+      coins: 'novčića',
+      gems: 'dragulja',
+    },
+    insufficientFunds: 'Nedovoljno sredstava',
+    notEnoughCoins: 'Nemate dovoljno novčića',
+    notEnoughGems: 'Nemate dovoljno dragulja',
+    purchaseSuccess: 'Uspešno ste kupili {item}!',
+    purchaseError: 'Greška pri kupovini',
+    premium: {
+      active: 'Premium Aktivan!',
+      enjoyBenefits: 'Uživate u svim premium benefitima.',
+      oneTime: 'jednokratno',
+      monthly: 'mesečno',
+      yearly: 'godišnje (ušteda 33%)',
+      recommended: 'PREPORUČENO',
+      features: {
+        noAds: 'Bez reklama',
+        privateRooms: 'Privatne sobe',
+        basicStats: 'Osnovna statistika',
+        fullStats: 'Kompletna statistika',
+        premiumSkins: 'Premium skinovi',
+        xpBoost: 'XP Boost (+50%)',
+        priorityMatching: 'Prioritetno matchmaking',
+        specialBadge: 'Specijalna značka',
+        exclusiveSkin: 'Ekskluzivni godišnji skin',
+        savings: 'Ušteda 20 EUR!',
+        allFromBasic: 'Sve iz BASIC',
+        allFromPro: 'Sve iz PRO',
+      },
+    },
+    subscription: 'Pretplata',
+    activateSubscription: 'Aktiviranje pretplate',
+    subscriptionActivated: 'Pretplata aktivirana!',
+  },
+
+  // Leaderboard
+  leaderboard: {
+    title: 'Rang Lista',
+    categories: {
+      xp: 'XP',
+      wins: 'Pobede',
+      rescuer: 'Spasilac',
+    },
+    noData: 'Nema podataka',
+    playToAppear: 'Igraj da se pojaviš na rang listi!',
+    you: 'Ti',
+    level: 'Nivo',
+  },
+
+  // Profile
+  profile: {
+    coins: 'Novčići',
+    gems: 'Dragulji',
+    stats: 'Statistika',
+    inventory: 'Inventar',
+    powers: 'Moći',
+    skins: 'Skinovi',
+    gamesPlayed: 'Odigrano',
+    gamesWon: 'Pobeda',
+    timesFrozen: 'Zaleđen',
+    timesUnfrozen: 'Odledio',
+    timesAsMraz: 'Kao Mraz',
+    record: 'Rekord',
+    settings: 'Podešavanja',
+    help: 'Pomoć',
+    terms: 'Uslovi korišćenja',
+    logout: 'Odjavi se',
+    logoutConfirm: 'Da li ste sigurni da želite da se odjavite?',
+    language: 'Jezik',
+    selectLanguage: 'Izaberi jezik',
+  },
+
+  // Game Lobby
+  lobby: {
+    loadingRoom: 'Učitavanje sobe...',
+    playersInRoom: 'Igrači u sobi',
+    host: 'Host',
+    ready: 'Spreman',
+    waiting: 'Čeka...',
+    waitingForPlayer: 'Čeka se igrač...',
+    startGame: 'Započni Igru',
+    imReady: 'Spreman sam!',
+    cancelReady: 'Otkaži spremnost',
+    leaveRoom: 'Napusti sobu',
+    leaveConfirm: 'Da li ste sigurni?',
+    leave: 'Napusti',
+    info: 'Jedan igrač će biti nasumično izabran za "Mraza". On mora da zamrzne sve ostale igrače dodirom rukavica!',
+    notEnoughPlayers: 'Nedovoljno igrača',
+    needAtLeast2: 'Potrebno je najmanje 2 igrača koji su spremni',
+    shareMessage: 'Pridruži mi se u igri "Zaledjen-Odledjen"! Kod sobe:',
+  },
+
+  // Game Play
+  game: {
+    youAreMraz: 'TI SI MRAZ!',
+    youAreFrozen: 'ZALEĐEN SI!',
+    run: 'BEGAJ!',
+    frozen: 'ZALEĐEN',
+    waitToUnfreeze: 'Čekaj da te neko odledi!',
+    freeze: 'ZAMRZNI!',
+    unfreeze: 'ODLEDI!',
+    approachPlayer: 'Približi se igraču',
+    instructions: {
+      mraz: 'Približi rukavicu drugim igračima da ih zamrzneš!',
+      frozen: 'Stani mirno! Drugi igrači te mogu odlediti.',
+      player: 'Begaj od Mraza! Odledi zaleđene igrače dodirom.',
+    },
+    bluetoothActive: 'Bluetooth skeniranje aktivno',
+    gameOver: 'Igra Završena!',
+    youWon: 'Pobedili ste!',
+    mrazWon: 'Mraz je pobedio!',
+    gameTime: 'Vreme igre',
+    frozenCount: 'Zaleđeno',
+    backToHome: 'Nazad na početnu',
+    leaveGame: 'Napusti igru',
+    leaveGameConfirm: 'Da li ste sigurni da želite da napustite igru?',
+    simulateTouch: 'Simulacija dodira',
+    choosePlayerFreeze: 'Izaberi igrača za zamrzavanje (u pravoj igri ovo bi bilo automatski preko Bluetooth-a)',
+    choosePlayerUnfreeze: 'Izaberi zaleđenog igrača za odleđivanje',
+    testFreezeUnfreeze: 'Test zamrzni/odledi',
+  },
+
+  // Powers
+  powers: {
+    superFreeze: {
+      name: 'Super Freeze',
+      description: 'Zamrzni bilo koga trenutno sa udaljenosti do 5m!',
+    },
+    ultraThaw: {
+      name: 'Ultra Thaw',
+      description: 'Automatski se odledi nakon 5 sekundi!',
+    },
+    shield: {
+      name: 'Shield',
+      description: 'Zaštitni štit - ne možeš biti zaleđen 10 sekundi!',
+    },
+    secondChance: {
+      name: 'Second Chance',
+      description: 'Imaš 2 sekunde da pobegneš nakon dodira!',
+    },
+    ghostMode: {
+      name: 'Ghost Mode',
+      description: 'Prolaziš kroz igrače bez zamrzavanja 15 sekundi!',
+    },
+  },
+
+  // Skins
+  skins: {
+    fire: {
+      name: 'Vatreni Skin',
+      description: 'Specijalna vatrena animacija i zvukovi!',
+    },
+    iceKing: {
+      name: 'Ice King',
+      description: 'Kraljevski ledeni izgled sa krunom!',
+    },
+    neon: {
+      name: 'Neon Glow',
+      description: 'Svetleći neon efekti!',
+    },
+    rainbow: {
+      name: 'Rainbow',
+      description: 'Dugine boje koje se menjaju!',
+    },
+  },
+
+  // Languages
+  languages: {
+    sr: 'Srpski',
+    en: 'English',
+    es: 'Español',
+    de: 'Deutsch',
+    fr: 'Français',
+    pt: 'Português (Brasil)',
+  },
+};

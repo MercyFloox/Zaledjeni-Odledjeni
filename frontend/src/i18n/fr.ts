@@ -1,0 +1,297 @@
+export default {
+  // Common
+  common: {
+    loading: 'Chargement...',
+    error: 'Erreur',
+    success: 'Succès',
+    cancel: 'Annuler',
+    confirm: 'Confirmer',
+    save: 'Enregistrer',
+    delete: 'Supprimer',
+    back: 'Retour',
+    next: 'Suivant',
+    yes: 'Oui',
+    no: 'Non',
+    ok: 'OK',
+    close: 'Fermer',
+    search: 'Rechercher',
+    settings: 'Paramètres',
+    help: 'Aide',
+    version: 'Version',
+  },
+
+  // Welcome Screen
+  welcome: {
+    title1: 'GELÉ',
+    title2: 'DÉGELÉ',
+    subtitle: 'Jeu de gel pour enfants',
+    login: 'Se connecter',
+    register: "S'inscrire",
+    features: {
+      multiplayer: 'Multijoueur',
+      bluetooth: 'Toucher Bluetooth',
+      ranking: 'Classement',
+    },
+  },
+
+  // Auth
+  auth: {
+    welcomeBack: 'Bon retour !',
+    loginSubtitle: 'Connectez-vous pour continuer à jouer',
+    createAccount: 'Créer un compte',
+    joinPlayers: 'Rejoignez des milliers de joueurs !',
+    email: 'Adresse e-mail',
+    password: 'Mot de passe',
+    confirmPassword: 'Confirmer le mot de passe',
+    username: "Nom d'utilisateur",
+    forgotPassword: 'Mot de passe oublié ?',
+    noAccount: "Pas de compte ?",
+    hasAccount: 'Déjà un compte ?',
+    loginButton: 'Se connecter',
+    registerButton: "S'inscrire",
+    loginLink: 'Connectez-vous',
+    registerLink: 'Inscrivez-vous',
+    errors: {
+      fillAll: 'Veuillez remplir tous les champs',
+      emailPassword: 'Veuillez entrer email et mot de passe',
+      passwordMismatch: 'Les mots de passe ne correspondent pas',
+      passwordLength: 'Le mot de passe doit avoir au moins 6 caractères',
+      loginFailed: 'Échec de la connexion',
+      registerFailed: "Échec de l'inscription",
+    },
+    registerSuccess: 'Inscription réussie !',
+  },
+
+  // Home
+  home: {
+    greeting: 'Bonjour',
+    readyToPlay: 'Prêt à jouer ?',
+    createRoom: 'Créer une salle',
+    joinRoom: 'Rejoindre',
+    howToPlay: 'Comment jouer ?',
+    publicRooms: 'Salles publiques',
+    noRooms: 'Aucune salle publique active',
+    createYourRoom: 'Créez votre salle !',
+    roomCode: 'Code',
+    steps: {
+      step1: '"Gel" poursuit les autres joueurs',
+      step2: 'Le toucher avec les gants gèle un joueur',
+      step3: "D'autres joueurs peuvent dégeler les gelés",
+      step4: 'Le jeu se termine quand tout le monde est gelé !',
+    },
+    createRoomModal: {
+      title: 'Créer une nouvelle salle',
+      roomName: 'Nom de la salle',
+      private: 'Salle privée',
+      public: 'Salle publique',
+      create: 'Créer',
+    },
+    joinRoomModal: {
+      title: 'Rejoindre une salle',
+      enterCode: 'Entrez le code (ex. ABC123)',
+      join: 'Rejoindre',
+    },
+    errors: {
+      enterRoomName: 'Entrez le nom de la salle',
+      enterRoomCode: 'Entrez le code de la salle',
+      createFailed: 'Échec de la création de la salle',
+      joinFailed: 'Échec de la connexion',
+      roomNotFound: 'Salle non trouvée',
+    },
+  },
+
+  // Shop
+  shop: {
+    title: 'Boutique',
+    tabs: {
+      powers: 'Pouvoirs',
+      skins: 'Skins',
+      premium: 'Premium',
+    },
+    purchased: 'Acheté',
+    rarity: {
+      common: 'COMMUN',
+      rare: 'RARE',
+      epic: 'ÉPIQUE',
+      legendary: 'LÉGENDAIRE',
+    },
+    confirmPurchase: "Confirmer l'achat",
+    purchaseQuestion: 'Voulez-vous acheter {item} pour {price} {currency} ?',
+    buy: 'Acheter',
+    currencies: {
+      coins: 'pièces',
+      gems: 'gemmes',
+    },
+    insufficientFunds: 'Fonds insuffisants',
+    notEnoughCoins: 'Pas assez de pièces',
+    notEnoughGems: 'Pas assez de gemmes',
+    purchaseSuccess: '{item} acheté avec succès !',
+    purchaseError: "Échec de l'achat",
+    premium: {
+      active: 'Premium Actif !',
+      enjoyBenefits: 'Profitez de tous les avantages premium.',
+      oneTime: 'unique',
+      monthly: 'mensuel',
+      yearly: 'annuel (économisez 33%)',
+      recommended: 'RECOMMANDÉ',
+      features: {
+        noAds: 'Sans publicité',
+        privateRooms: 'Salles privées',
+        basicStats: 'Statistiques de base',
+        fullStats: 'Statistiques complètes',
+        premiumSkins: 'Skins premium',
+        xpBoost: 'Boost XP (+50%)',
+        priorityMatching: 'Matchmaking prioritaire',
+        specialBadge: 'Badge spécial',
+        exclusiveSkin: 'Skin exclusif annuel',
+        savings: 'Économisez 20 EUR !',
+        allFromBasic: 'Tout de BASIC',
+        allFromPro: 'Tout de PRO',
+      },
+    },
+    subscription: 'Abonnement',
+    activateSubscription: "Activer l'abonnement",
+    subscriptionActivated: 'Abonnement activé !',
+  },
+
+  // Leaderboard
+  leaderboard: {
+    title: 'Classement',
+    categories: {
+      xp: 'XP',
+      wins: 'Victoires',
+      rescuer: 'Sauveteur',
+    },
+    noData: 'Pas de données',
+    playToAppear: 'Jouez pour apparaître au classement !',
+    you: 'Vous',
+    level: 'Niveau',
+  },
+
+  // Profile
+  profile: {
+    coins: 'Pièces',
+    gems: 'Gemmes',
+    stats: 'Statistiques',
+    inventory: 'Inventaire',
+    powers: 'Pouvoirs',
+    skins: 'Skins',
+    gamesPlayed: 'Joués',
+    gamesWon: 'Gagnés',
+    timesFrozen: 'Gelé',
+    timesUnfrozen: 'Dégelé',
+    timesAsMraz: 'Comme Gel',
+    record: 'Record',
+    settings: 'Paramètres',
+    help: 'Aide',
+    terms: "Conditions d'utilisation",
+    logout: 'Se déconnecter',
+    logoutConfirm: 'Êtes-vous sûr de vouloir vous déconnecter ?',
+    language: 'Langue',
+    selectLanguage: 'Choisir la langue',
+  },
+
+  // Game Lobby
+  lobby: {
+    loadingRoom: 'Chargement de la salle...',
+    playersInRoom: 'Joueurs dans la salle',
+    host: 'Hôte',
+    ready: 'Prêt',
+    waiting: 'En attente...',
+    waitingForPlayer: 'En attente de joueur...',
+    startGame: 'Démarrer le jeu',
+    imReady: 'Je suis prêt !',
+    cancelReady: 'Annuler prêt',
+    leaveRoom: 'Quitter la salle',
+    leaveConfirm: 'Êtes-vous sûr ?',
+    leave: 'Quitter',
+    info: 'Un joueur sera choisi au hasard comme "Gel". Il doit geler tous les autres joueurs en touchant leurs gants !',
+    notEnoughPlayers: 'Pas assez de joueurs',
+    needAtLeast2: 'Au moins 2 joueurs prêts requis',
+    shareMessage: 'Rejoignez "Gelé-Dégelé" ! Code de la salle :',
+  },
+
+  // Game Play
+  game: {
+    youAreMraz: 'VOUS ÊTES GEL !',
+    youAreFrozen: 'VOUS ÊTES GELÉ !',
+    run: 'COUREZ !',
+    frozen: 'GELÉ',
+    waitToUnfreeze: 'Attendez que quelqu\'un vous dégèle !',
+    freeze: 'GELER !',
+    unfreeze: 'DÉGELER !',
+    approachPlayer: 'Approchez-vous d\'un joueur',
+    instructions: {
+      mraz: 'Approchez-vous des autres joueurs avec votre gant pour les geler !',
+      frozen: 'Restez immobile ! D\'autres joueurs peuvent vous dégeler.',
+      player: 'Fuyez Gel ! Dégelez les joueurs gelés en les touchant.',
+    },
+    bluetoothActive: 'Scan Bluetooth actif',
+    gameOver: 'Jeu terminé !',
+    youWon: 'Vous avez gagné !',
+    mrazWon: 'Gel gagne !',
+    gameTime: 'Temps de jeu',
+    frozenCount: 'Gelés',
+    backToHome: 'Retour à l\'accueil',
+    leaveGame: 'Quitter le jeu',
+    leaveGameConfirm: 'Êtes-vous sûr de vouloir quitter le jeu ?',
+    simulateTouch: 'Simuler le toucher',
+    choosePlayerFreeze: 'Choisir un joueur à geler (en vrai jeu ce serait automatique via Bluetooth)',
+    choosePlayerUnfreeze: 'Choisir un joueur gelé à dégeler',
+    testFreezeUnfreeze: 'Tester geler/dégeler',
+  },
+
+  // Powers
+  powers: {
+    superFreeze: {
+      name: 'Super Gel',
+      description: 'Gelez n\'importe qui instantanément jusqu\'à 5m !',
+    },
+    ultraThaw: {
+      name: 'Ultra Dégel',
+      description: 'Dégel automatique après 5 secondes !',
+    },
+    shield: {
+      name: 'Bouclier',
+      description: 'Bouclier protecteur - ne peut pas être gelé pendant 10 secondes !',
+    },
+    secondChance: {
+      name: 'Seconde Chance',
+      description: 'Vous avez 2 secondes pour vous échapper après le toucher !',
+    },
+    ghostMode: {
+      name: 'Mode Fantôme',
+      description: 'Passez à travers les joueurs sans geler pendant 15 secondes !',
+    },
+  },
+
+  // Skins
+  skins: {
+    fire: {
+      name: 'Skin Feu',
+      description: 'Animation et sons de feu spéciaux !',
+    },
+    iceKing: {
+      name: 'Roi des Glaces',
+      description: 'Look royal glacé avec couronne !',
+    },
+    neon: {
+      name: 'Néon Brillant',
+      description: 'Effets néon brillants !',
+    },
+    rainbow: {
+      name: 'Arc-en-ciel',
+      description: 'Couleurs arc-en-ciel qui changent !',
+    },
+  },
+
+  // Languages
+  languages: {
+    sr: 'Srpski',
+    en: 'English',
+    es: 'Español',
+    de: 'Deutsch',
+    fr: 'Français',
+    pt: 'Português (Brasil)',
+  },
+};
