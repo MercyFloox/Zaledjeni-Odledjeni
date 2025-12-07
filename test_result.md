@@ -101,3 +101,192 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
+
+user_problem_statement: "Kreiranje igre Zaledjen-Odledjen - decija igra zamrzavanja sa vise igraca, Bluetooth povezivanjem, prodavnicom sa mocima i skinovima, premium pretplatama i statistikom"
+
+backend:
+  - task: "User Authentication (Register/Login)"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Registracija i login rade, JWT tokeni se generisu ispravno"
+
+  - task: "Game Room Creation/Join API"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Kreiranje i pridruzivanje sobama radi"
+
+  - task: "Shop Items API"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Shop items endpoint vraca sve moci i skinove"
+
+  - task: "Premium Plans API"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Premium planovi (basic, pro monthly, pro yearly) dostupni"
+
+  - task: "Leaderboard API"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Leaderboard vraca rangirane igrace"
+
+  - task: "Socket.IO Real-time Events"
+    implemented: true
+    working: NA
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: NA
+        agent: "main"
+        comment: "Implementirani eventi za freeze/unfreeze, nije testiran u pravom multiplayer scenariju"
+
+frontend:
+  - task: "Welcome Screen"
+    implemented: true
+    working: true
+    file: "app/index.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Welcome screen sa animacijama i dugmadima za prijavu/registraciju radi"
+
+  - task: "Authentication Screens (Login/Register)"
+    implemented: true
+    working: true
+    file: "app/(auth)/login.tsx, app/(auth)/register.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Login i register ekrani prikazuju se korektno"
+
+  - task: "Home Screen with Room Actions"
+    implemented: true
+    working: true
+    file: "app/(main)/home.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Home ekran sa opcijama za kreiranje/pridruzivanje sobama"
+
+  - task: "Shop Screen (Powers, Skins, Premium)"
+    implemented: true
+    working: true
+    file: "app/(main)/shop.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Shop sa mocima, skinovima i premium pretplatama izgleda odlicno"
+
+  - task: "Leaderboard Screen"
+    implemented: true
+    working: true
+    file: "app/(main)/leaderboard.tsx"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Leaderboard ekran implementiran"
+
+  - task: "Profile Screen"
+    implemented: true
+    working: true
+    file: "app/(main)/profile.tsx"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Profil sa statistikom i inventarom"
+
+  - task: "Game Lobby Screen"
+    implemented: true
+    working: true
+    file: "app/(game)/lobby.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Lobby ekran za cekanje igraca"
+
+  - task: "Game Play Screen"
+    implemented: true
+    working: true
+    file: "app/(game)/play.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Play ekran sa freeze/unfreeze mehanikom"
+
+metadata:
+  created_by: "main_agent"
+  version: "1.0"
+  test_sequence: 1
+  run_ui: false
+
+test_plan:
+  current_focus:
+    - "Full game flow testing"
+  stuck_tasks: []
+  test_all: false
+  test_priority: "high_first"
+
+agent_communication:
+  - agent: "main"
+    message: "MVP implementiran sa svim osnovnim funkcionalnostima - auth, shop, premium, game mehanika"
