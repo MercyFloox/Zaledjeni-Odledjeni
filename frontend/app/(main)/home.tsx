@@ -388,8 +388,8 @@ export default function HomeScreen() {
           {publicRooms.length === 0 ? (
             <View style={styles.emptyRooms}>
               <Ionicons name="game-controller-outline" size={50} color="#5a7a9a" />
-              <Text style={styles.emptyText}>Nema aktivnih javnih soba</Text>
-              <Text style={styles.emptySubtext}>Kreiraj svoju sobu!</Text>
+              <Text style={styles.emptyText}>{t('home.noRooms')}</Text>
+              <Text style={styles.emptySubtext}>{t('home.createYourRoom')}</Text>
             </View>
           ) : (
             publicRooms.map((room) => (
