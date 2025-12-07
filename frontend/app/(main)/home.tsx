@@ -401,7 +401,7 @@ export default function HomeScreen() {
               >
                 <View style={styles.roomInfo}>
                   <Text style={styles.roomName}>{room.name}</Text>
-                  <Text style={styles.roomCode}>Kod: {room.code}</Text>
+                  <Text style={styles.roomCode}>{t('home.roomCode')}: {room.code}</Text>
                 </View>
                 <View style={styles.roomPlayers}>
                   <Ionicons name="people" size={18} color="#4fc3f7" />
