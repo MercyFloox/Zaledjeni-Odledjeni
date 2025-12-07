@@ -592,6 +592,40 @@ async def get_ble_device(token: str):
     ble_device = user.get("ble_device")
     return {"device": ble_device}
 
+# ==================== GAME TEST ====================
+
+@api_router.post("/game/freeze-test")
+async def freeze_test(token: str):
+    """Test freeze functionality - simulates a freeze event"""
+    user = await get_current_user(token)
+    if not user:
+        raise HTTPException(status_code=401, detail="Neautorizovan pristup")
+    
+    # Check if user has BLE device connected
+    ble_device = user.get("ble_device")
+    has_ble = ble_device is not None
+    
+    # Log test event
+    test_event = {
+        "user_id": str(user["_id"]),
+        "username": user["username"],
+        "event_type": "freeze_test",
+        "has_ble_device": has_ble,
+        "ble_device_id": ble_device.get("device_id") if ble_device else None,
+        "timestamp": datetime.utcnow()
+    }
+    
+    # Optionally store test events in a collection
+    await db.test_events.insert_one(test_event)
+    
+    return {
+        "success": True,
+        "message": "Test freeze event triggered!",
+        "user": user["username"],
+        "has_ble_device": has_ble,
+        "device_name": ble_device.get("device_name") if ble_device else None
+    }
+
 # ==================== LEADERBOARD ====================
 
 @api_router.get("/leaderboard")
