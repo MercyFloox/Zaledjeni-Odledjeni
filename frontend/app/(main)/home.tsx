@@ -41,6 +41,7 @@ interface User {
 export default function HomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { t } = useLanguage();
   
   const [user, setUser] = useState<User | null>(null);
   const [publicRooms, setPublicRooms] = useState<Room[]>([]);
@@ -55,6 +56,11 @@ export default function HomeScreen() {
   const [isPrivate, setIsPrivate] = useState(false);
   const [creating, setCreating] = useState(false);
   const [joining, setJoining] = useState(false);
+  
+  // BLE Status
+  const [bleDevice, setBleDevice] = useState<any>(null);
+  const [testingFreeze, setTestingFreeze] = useState(false);
+  const freezeAnimation = useState(new Animated.Value(0))[0];
 
   useEffect(() => {
     loadData();
