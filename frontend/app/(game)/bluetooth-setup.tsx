@@ -403,6 +403,19 @@ export default function BluetoothSetupScreen() {
           )}
         </View>
 
+        {/* Web Platform Warning */}
+        {Platform.OS === 'web' && (
+          <View style={styles.webWarningCard}>
+            <View style={styles.webWarningHeader}>
+              <Ionicons name="information-circle" size={24} color="#ffc107" />
+              <Text style={styles.webWarningTitle}>Bluetooth Not Available</Text>
+            </View>
+            <Text style={styles.webWarningText}>
+              Bluetooth functionality is only available on mobile devices. Please use the mobile app to connect to Bluetooth devices.
+            </Text>
+          </View>
+        )}
+
         {/* Connected Device Info */}
         {connectedDevice && (
           <View style={styles.connectedCard}>
