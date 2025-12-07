@@ -440,8 +440,30 @@ async def join_room(request: JoinRoomRequest, token: str):
 
 @api_router.get("/rooms/public")
 async def get_public_rooms():
-    rooms = await db.rooms.find({"is_private": False, "status": "waiting"}).to_list(20)
-    return [{**r, "id": str(r["_id"])} for r in rooms]
+    try:
+        rooms = await db.rooms.find({"is_private": False, "status": "waiting"}).to_list(20)
+        
+        # Convert ObjectId to string and clean data
+        cleaned_rooms = []
+        for room in rooms:
+            cleaned_room = {
+                "id": str(room["_id"]),
+                "code": room.get("code", ""),
+                "name": room.get("name", ""),
+                "host": room.get("host", {}),
+                "players": room.get("players", []),
+                "max_players": room.get("max_players", 10),
+                "status": room.get("status", "waiting"),
+                "is_private": room.get("is_private", False),
+                "created_at": room.get("created_at").isoformat() if room.get("created_at") else None,
+            }
+            cleaned_rooms.append(cleaned_room)
+        
+        return cleaned_rooms
+    except Exception as e:
+        print(f"Error fetching public rooms: {e}")
+        # Return empty list if error occurs
+        return []
 
 @api_router.get("/rooms/{room_code}")
 async def get_room(room_code: str):
