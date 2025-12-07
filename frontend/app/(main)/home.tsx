@@ -262,7 +262,7 @@ export default function HomeScreen() {
               style={styles.quickActionGradient}
             >
               <Ionicons name="add-circle" size={40} color="#fff" />
-              <Text style={styles.quickActionText}>Kreiraj Sobu</Text>
+              <Text style={styles.quickActionText}>{t('home.createRoom')}</Text>
             </LinearGradient>
           </TouchableOpacity>
 
@@ -276,9 +276,79 @@ export default function HomeScreen() {
               style={styles.quickActionGradient}
             >
               <Ionicons name="enter" size={40} color="#fff" />
-              <Text style={styles.quickActionText}>Pridruzi se</Text>
+              <Text style={styles.quickActionText}>{t('home.joinRoom')}</Text>
             </LinearGradient>
           </TouchableOpacity>
+        </View>
+
+        {/* BLE Status & Test Freeze */}
+        <View style={styles.bleSection}>
+          <View style={styles.bleCard}>
+            <View style={styles.bleHeader}>
+              <Ionicons name="bluetooth" size={24} color={bleDevice ? '#4caf50' : '#5a7a9a'} />
+              <View style={styles.bleInfo}>
+                <Text style={styles.bleTitle}>{t('home.bleStatus')}</Text>
+                <Text style={[
+                  styles.bleStatus,
+                  bleDevice ? styles.bleConnected : styles.bleDisconnected
+                ]}>
+                  {bleDevice ? t('home.bleConnected') : t('home.bleNotConnected')}
+                </Text>
+                {bleDevice && (
+                  <Text style={styles.bleDeviceName}>{bleDevice.device_name}</Text>
+                )}
+              </View>
+              <TouchableOpacity
+                style={styles.bleSetupButton}
+                onPress={() => router.push('/(game)/bluetooth-setup')}
+              >
+                <Ionicons name="settings-outline" size={20} color="#4fc3f7" />
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Test Freeze Button */}
+          <TouchableOpacity
+            style={styles.testFreezeButton}
+            onPress={handleTestFreeze}
+            disabled={testingFreeze}
+            activeOpacity={0.8}
+          >
+            <LinearGradient
+              colors={testingFreeze ? ['#5a7a9a', '#4a6a8a'] : ['#29b6f6', '#0277bd']}
+              style={styles.testFreezeGradient}
+            >
+              {testingFreeze ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Ionicons name="snow" size={24} color="#fff" />
+              )}
+              <Text style={styles.testFreezeText}>
+                {testingFreeze ? t('game.unfreezing') : t('home.testFreeze')}
+              </Text>
+            </LinearGradient>
+          </TouchableOpacity>
+
+          {/* Freeze Animation Overlay */}
+          {testingFreeze && (
+            <Animated.View
+              style={[
+                styles.freezeOverlay,
+                {
+                  opacity: freezeAnimation,
+                  transform: [{
+                    scale: freezeAnimation.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [0.8, 1.1],
+                    }),
+                  }],
+                },
+              ]}
+            >
+              <Ionicons name="snow" size={80} color="#29b6f6" />
+              <Text style={styles.freezeText}>{t('game.frozenEffect')}</Text>
+            </Animated.View>
+          )}
         </View>
 
         {/* How to Play */}
