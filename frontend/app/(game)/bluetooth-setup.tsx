@@ -16,6 +16,7 @@ import { LinearGradient } from 'expo-linear-gradient/build/LinearGradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
+import Constants from 'expo-constants';
 import { useLanguage } from '../../src/context/LanguageContext';
 import { BleManager, Device, State } from 'react-native-ble-plx';
 
