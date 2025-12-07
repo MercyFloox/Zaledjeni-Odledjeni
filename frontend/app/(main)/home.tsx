@@ -73,6 +73,7 @@ export default function HomeScreen() {
         setUser(JSON.parse(userData));
       }
       await fetchPublicRooms();
+      await loadBleDevice();
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
@@ -89,10 +90,58 @@ export default function HomeScreen() {
     }
   };
 
+  const loadBleDevice = async () => {
+    try {
+      const token = await AsyncStorage.getItem('authToken');
+      if (token) {
+        const response = await axios.get(`${API_URL}/api/ble/device?token=${token}`);
+        if (response.data.device) {
+          setBleDevice(response.data.device);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading BLE device:', error);
+    }
+  };
+
   const onRefresh = async () => {
     setRefreshing(true);
     await fetchPublicRooms();
+    await loadBleDevice();
     setRefreshing(false);
+  };
+
+  const handleTestFreeze = async () => {
+    setTestingFreeze(true);
+    
+    // Trigger freeze animation
+    Animated.sequence([
+      Animated.timing(freezeAnimation, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.delay(2000),
+      Animated.timing(freezeAnimation, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      setTestingFreeze(false);
+    });
+
+    // Call backend endpoint
+    try {
+      const token = await AsyncStorage.getItem('authToken');
+      if (token) {
+        const response = await axios.post(`${API_URL}/api/game/freeze-test?token=${token}`);
+        console.log('Test freeze response:', response.data);
+      }
+    } catch (error) {
+      console.error('Error testing freeze:', error);
+      Alert.alert(t('common.error'), 'Test freeze greška');
+    }
   };
 
   const handleCreateRoom = async () => {
