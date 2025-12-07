@@ -540,6 +540,58 @@ async def equip_skin(skin_id: str, token: str):
     
     return {"success": True}
 
+# ==================== BLE DEVICE ====================
+
+class BLEDeviceRequest(BaseModel):
+    device_id: str
+    device_name: str
+
+@api_router.post("/ble/save-device")
+async def save_ble_device(request: BLEDeviceRequest, token: str):
+    """Save connected BLE device to user profile"""
+    user = await get_current_user(token)
+    if not user:
+        raise HTTPException(status_code=401, detail="Neautorizovan pristup")
+    
+    await db.users.update_one(
+        {"_id": user["_id"]},
+        {
+            "$set": {
+                "ble_device": {
+                    "device_id": request.device_id,
+                    "device_name": request.device_name,
+                    "connected_at": datetime.utcnow()
+                }
+            }
+        }
+    )
+    
+    return {"success": True, "message": f"Uređaj {request.device_name} je sačuvan"}
+
+@api_router.delete("/ble/remove-device")
+async def remove_ble_device(token: str):
+    """Remove BLE device from user profile"""
+    user = await get_current_user(token)
+    if not user:
+        raise HTTPException(status_code=401, detail="Neautorizovan pristup")
+    
+    await db.users.update_one(
+        {"_id": user["_id"]},
+        {"$unset": {"ble_device": ""}}
+    )
+    
+    return {"success": True, "message": "Uređaj je uklonjen"}
+
+@api_router.get("/ble/device")
+async def get_ble_device(token: str):
+    """Get saved BLE device for user"""
+    user = await get_current_user(token)
+    if not user:
+        raise HTTPException(status_code=401, detail="Neautorizovan pristup")
+    
+    ble_device = user.get("ble_device")
+    return {"device": ble_device}
+
 # ==================== LEADERBOARD ====================
 
 @api_router.get("/leaderboard")
