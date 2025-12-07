@@ -942,4 +942,28 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
   },
+  webWarningCard: {
+    backgroundColor: 'rgba(255, 193, 7, 0.1)',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 193, 7, 0.3)',
+  },
+  webWarningHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 12,
+  },
+  webWarningTitle: {
+    color: '#ffc107',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  webWarningText: {
+    color: '#a8d4ff',
+    fontSize: 14,
+    lineHeight: 20,
+  },
 });
