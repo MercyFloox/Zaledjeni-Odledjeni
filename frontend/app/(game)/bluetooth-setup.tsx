@@ -479,7 +479,7 @@ export default function BluetoothSetupScreen() {
           <TouchableOpacity
             style={styles.scanButton}
             onPress={scanning ? handleStopScan : handleScan}
-            disabled={bluetoothState !== State.PoweredOn}
+            disabled={Platform.OS === 'web' || bluetoothState !== State.PoweredOn}
             activeOpacity={0.8}
           >
             <LinearGradient
