@@ -353,38 +353,38 @@ export default function HomeScreen() {
 
         {/* How to Play */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Kako se igra?</Text>
+          <Text style={styles.sectionTitle}>{t('home.howToPlay')}</Text>
           <View style={styles.howToPlay}>
             <View style={styles.howToPlayItem}>
               <View style={[styles.stepNumber, { backgroundColor: '#4fc3f7' }]}>
                 <Text style={styles.stepNumberText}>1</Text>
               </View>
-              <Text style={styles.howToPlayText}>"Mraz" juri ostale igrace</Text>
+              <Text style={styles.howToPlayText}>{t('home.steps.step1')}</Text>
             </View>
             <View style={styles.howToPlayItem}>
               <View style={[styles.stepNumber, { backgroundColor: '#29b6f6' }]}>
                 <Text style={styles.stepNumberText}>2</Text>
               </View>
-              <Text style={styles.howToPlayText}>Dodirom rukavica igrac se zamrzava</Text>
+              <Text style={styles.howToPlayText}>{t('home.steps.step2')}</Text>
             </View>
             <View style={styles.howToPlayItem}>
               <View style={[styles.stepNumber, { backgroundColor: '#ff7043' }]}>
                 <Text style={styles.stepNumberText}>3</Text>
               </View>
-              <Text style={styles.howToPlayText}>Drugi igraci mogu da odlede zamrznutog</Text>
+              <Text style={styles.howToPlayText}>{t('home.steps.step3')}</Text>
             </View>
             <View style={styles.howToPlayItem}>
               <View style={[styles.stepNumber, { backgroundColor: '#f4511e' }]}>
                 <Text style={styles.stepNumberText}>4</Text>
               </View>
-              <Text style={styles.howToPlayText}>Igra se zavrsava kada su svi zaledjeni!</Text>
+              <Text style={styles.howToPlayText}>{t('home.steps.step4')}</Text>
             </View>
           </View>
         </View>
 
         {/* Public Rooms */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Javne Sobe</Text>
+          <Text style={styles.sectionTitle}>{t('home.publicRooms')}</Text>
           {publicRooms.length === 0 ? (
             <View style={styles.emptyRooms}>
               <Ionicons name="game-controller-outline" size={50} color="#5a7a9a" />
