@@ -169,7 +169,7 @@ export default function HomeScreen() {
       // Navigate to game room
       router.push(`/(game)/lobby?code=${room.code}`);
     } catch (error: any) {
-      Alert.alert('Greska', error.response?.data?.detail || 'Greska pri kreiranju sobe');
+      Alert.alert(t('common.error'), error.response?.data?.detail || t('home.errors.createFailed'));
     } finally {
       setCreating(false);
     }
@@ -177,7 +177,7 @@ export default function HomeScreen() {
 
   const handleJoinRoom = async () => {
     if (!roomCode.trim()) {
-      Alert.alert('Greska', 'Unesite kod sobe');
+      Alert.alert(t('common.error'), t('home.errors.enterRoomCode'));
       return;
     }
 
@@ -194,7 +194,7 @@ export default function HomeScreen() {
       
       router.push(`/(game)/lobby?code=${roomCode.trim().toUpperCase()}`);
     } catch (error: any) {
-      Alert.alert('Greska', error.response?.data?.detail || 'Soba nije pronadjena');
+      Alert.alert(t('common.error'), error.response?.data?.detail || t('home.errors.roomNotFound'));
     } finally {
       setJoining(false);
     }
@@ -209,7 +209,7 @@ export default function HomeScreen() {
       );
       router.push(`/(game)/lobby?code=${code}`);
     } catch (error: any) {
-      Alert.alert('Greska', error.response?.data?.detail || 'Greska pri pridruzivanju');
+      Alert.alert(t('common.error'), error.response?.data?.detail || t('home.errors.joinFailed'));
     }
   };
 
