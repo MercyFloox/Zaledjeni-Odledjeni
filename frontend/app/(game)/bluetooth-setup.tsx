@@ -492,12 +492,12 @@ export default function BluetoothSetupScreen() {
           <TouchableOpacity
             style={styles.scanButton}
             onPress={scanning ? handleStopScan : handleScan}
-            disabled={Platform.OS === 'web' || bluetoothState !== State.PoweredOn}
+            disabled={Platform.OS === 'web' || isExpoGo || bluetoothState !== State.PoweredOn}
             activeOpacity={0.8}
           >
             <LinearGradient
               colors={scanning ? ['#f44336', '#d32f2f'] : 
-                      (Platform.OS === 'web' || bluetoothState !== State.PoweredOn) ? ['#5a7a9a', '#4a6a8a'] :
+                      (Platform.OS === 'web' || isExpoGo || bluetoothState !== State.PoweredOn) ? ['#5a7a9a', '#4a6a8a'] :
                       ['#4fc3f7', '#0288d1']}
               style={styles.scanButtonGradient}
             >
