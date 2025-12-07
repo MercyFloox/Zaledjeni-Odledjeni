@@ -98,6 +98,11 @@ export default {
       joinFailed: 'Greška pri pridruživanju',
       roomNotFound: 'Soba nije pronađena',
     },
+    bleStatus: 'BLE Rukavica',
+    bleConnected: 'Povezano',
+    bleNotConnected: 'Nije povezano',
+    bleSetup: 'Podesi rukavicu',
+    testFreeze: 'Testiraj zamrzavanje',
   },
 
   // Shop
