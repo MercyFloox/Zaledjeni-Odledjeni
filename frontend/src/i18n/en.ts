@@ -370,5 +370,6 @@ export default {
     savedDevice: 'Saved device',
     deviceDisconnected: 'Device disconnected',
     connectionFailed: 'Connection failed',
+    notAvailable: 'Bluetooth is not available on this platform',
   },
 };
