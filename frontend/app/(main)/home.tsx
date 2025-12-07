@@ -85,8 +85,13 @@ export default function HomeScreen() {
     try {
       const response = await axios.get(`${API_URL}/api/rooms/public`);
       setPublicRooms(response.data || []);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching rooms:', error);
+      console.error('Error response:', error.response?.data);
+      console.error('Error message:', error.message);
+      console.error('API URL:', API_URL);
+      // Set empty array on error so UI still works
+      setPublicRooms([]);
     }
   };
 
