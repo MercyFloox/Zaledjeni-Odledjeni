@@ -412,15 +412,19 @@ export default function BluetoothSetupScreen() {
           )}
         </View>
 
-        {/* Web Platform Warning */}
-        {Platform.OS === 'web' && (
+        {/* Web Platform & Expo Go Warning */}
+        {(Platform.OS === 'web' || isExpoGo) && (
           <View style={styles.webWarningCard}>
             <View style={styles.webWarningHeader}>
               <Ionicons name="information-circle" size={24} color="#ffc107" />
-              <Text style={styles.webWarningTitle}>Bluetooth Not Available</Text>
+              <Text style={styles.webWarningTitle}>
+                {t('bluetooth.bluetoothOff')}
+              </Text>
             </View>
             <Text style={styles.webWarningText}>
-              Bluetooth functionality is only available on mobile devices. Please use the mobile app to connect to Bluetooth devices.
+              {isExpoGo 
+                ? 'Bluetooth functionality requires a custom development build. It is not available in Expo Go. Please build a standalone app to use Bluetooth features.'
+                : 'Bluetooth functionality is only available on mobile devices. Please use the mobile app to connect to Bluetooth devices.'}
             </Text>
           </View>
         )}
