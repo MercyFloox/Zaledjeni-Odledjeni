@@ -1,287 +1,303 @@
-diff --git a/frontend/app/(game)/bluetooth-setup.tsx b/frontend/app/(game)/bluetooth-setup.tsx
-index 9c02fcf..892c04f 100644
---- a/frontend/app/(game)/bluetooth-setup.tsx
-+++ b/frontend/app/(game)/bluetooth-setup.tsx
-@@ -39,7 +39,7 @@ export default function BluetoothSetupScreen() {
-   const insets = useSafeAreaInsets();
-   const { t } = useLanguage();
-   
--  const [bleManager] = useState(() => new BleManager());
-+  const [bleManager] = useState(() => Platform.OS === 'web' ? null : new BleManager());
-   const [scanning, setScanning] = useState(false);
-   const [devices, setDevices] = useState<BluetoothDevice[]>([]);
-   const [connectedDevice, setConnectedDevice] = useState<BluetoothDevice | null>(null);
-@@ -59,26 +59,37 @@ export default function BluetoothSetupScreen() {
-       if (scanTimeoutRef.current) {
-         clearTimeout(scanTimeoutRef.current);
-       }
--      bleManager.stopDeviceScan();
--      bleManager.destroy();
-+      if (bleManager) {
-+        bleManager.stopDeviceScan();
-+        bleManager.destroy();
-+      }
-     };
-   }, []);
- 
-   const initializeBluetooth = async () => {
-     try {
-+      // Check if we're on web platform
-+      if (Platform.OS === 'web') {
-+        setBluetoothState(State.Unsupported);
-+        setLoading(false);
-+        return;
-+      }
-+
-       // Request permissions for Android
-       if (Platform.OS === 'android') {
-         await requestAndroidPermissions();
-       }
- 
-       // Check Bluetooth state
--      const state = await bleManager.state();
--      setBluetoothState(state);
--
--      // Subscribe to Bluetooth state changes
--      bleManager.onStateChange((newState) => {
--        setBluetoothState(newState);
--      }, true);
-+      if (bleManager) {
-+        const state = await bleManager.state();
-+        setBluetoothState(state);
-+
-+        // Subscribe to Bluetooth state changes
-+        bleManager.onStateChange((newState) => {
-+          setBluetoothState(newState);
-+        }, true);
-+      }
- 
-       setLoading(false);
-     } catch (error) {
-@@ -132,7 +143,7 @@ export default function BluetoothSetupScreen() {
-   };
- 
-   const handleScan = async () => {
--    if (bluetoothState !== State.PoweredOn) {
-+    if (!bleManager || bluetoothState !== State.PoweredOn) {
-       Alert.alert(
-         t('bluetooth.bluetoothOff'),
-         t('bluetooth.turnOnBluetooth'),
-@@ -176,7 +187,9 @@ export default function BluetoothSetupScreen() {
- 
-     // Stop scanning after 10 seconds
-     scanTimeoutRef.current = setTimeout(() => {
--      bleManager.stopDeviceScan();
-+      if (bleManager) {
-+        bleManager.stopDeviceScan();
-+      }
-       setScanning(false);
-     }, 10000);
-   };
-@@ -185,11 +198,21 @@ export default function BluetoothSetupScreen() {
-     if (scanTimeoutRef.current) {
-       clearTimeout(scanTimeoutRef.current);
-     }
--    bleManager.stopDeviceScan();
-+    if (bleManager) {
-+      bleManager.stopDeviceScan();
-+    }
-     setScanning(false);
-   };
- 
-   const handleConnect = async (device: BluetoothDevice) => {
-+    if (!bleManager) {
-+      Alert.alert(
-+        t('common.error'),
-+        t('bluetooth.notAvailable')
-+      );
-+      return;
-+    }
-+
-     try {
-       setConnecting(device.id);
-       
-@@ -241,7 +264,7 @@ export default function BluetoothSetupScreen() {
-   };
- 
-   const handleDisconnect = async () => {
--    if (connectedDevice) {
-+    if (connectedDevice && bleManager) {
-       try {
-         await bleManager.cancelDeviceConnection(connectedDevice.id);
-         setConnectedDevice(null);
-@@ -380,6 +403,19 @@ export default function BluetoothSetupScreen() {
-           )}
-         </View>
- 
-+        {/* Web Platform Warning */}
-+        {Platform.OS === 'web' && (
-+          <View style={styles.webWarningCard}>
-+            <View style={styles.webWarningHeader}>
-+              <Ionicons name="information-circle" size={24} color="#ffc107" />
-+              <Text style={styles.webWarningTitle}>Bluetooth Not Available</Text>
-+            </View>
-+            <Text style={styles.webWarningText}>
-+              Bluetooth functionality is only available on mobile devices. Please use the mobile app to connect to Bluetooth devices.
-+            </Text>
-+          </View>
-+        )}
-+
-         {/* Connected Device Info */}
-         {connectedDevice && (
-           <View style={styles.connectedCard}>
-@@ -443,12 +479,12 @@ export default function BluetoothSetupScreen() {
-           <TouchableOpacity
-             style={styles.scanButton}
-             onPress={scanning ? handleStopScan : handleScan}
--            disabled={bluetoothState !== State.PoweredOn}
-+            disabled={Platform.OS === 'web' || bluetoothState !== State.PoweredOn}
-             activeOpacity={0.8}
-           >
-             <LinearGradient
-               colors={scanning ? ['#f44336', '#d32f2f'] : 
--                      bluetoothState !== State.PoweredOn ? ['#5a7a9a', '#4a6a8a'] :
-+                      (Platform.OS === 'web' || bluetoothState !== State.PoweredOn) ? ['#5a7a9a', '#4a6a8a'] :
-                       ['#4fc3f7', '#0288d1']}
-               style={styles.scanButtonGradient}
-             >
-@@ -906,4 +942,28 @@ const styles = StyleSheet.create({
-     fontSize: 14,
-     lineHeight: 20,
+diff --git a/frontend/src/i18n/sr.ts b/frontend/src/i18n/sr.ts
+index 41841d7..c127878 100644
+--- a/frontend/src/i18n/sr.ts
++++ b/frontend/src/i18n/sr.ts
+@@ -371,5 +371,6 @@ export default {
+     savedDevice: 'Sačuvan uređaj',
+     deviceDisconnected: 'Uređaj je prekinuo vezu',
+     connectionFailed: 'Povezivanje nije uspelo',
++    notAvailable: 'Bluetooth nije dostupan na ovoj platformi',
    },
-+  webWarningCard: {
-+    backgroundColor: 'rgba(255, 193, 7, 0.1)',
-+    borderRadius: 16,
-+    padding: 16,
-+    marginBottom: 20,
-+    borderWidth: 1,
-+    borderColor: 'rgba(255, 193, 7, 0.3)',
-+  },
-+  webWarningHeader: {
-+    flexDirection: 'row',
-+    alignItems: 'center',
-+    gap: 10,
-+    marginBottom: 12,
-+  },
-+  webWarningTitle: {
-+    color: '#ffc107',
-+    fontSize: 16,
-+    fontWeight: '600',
-+  },
-+  webWarningText: {
-+    color: '#a8d4ff',
-+    fontSize: 14,
-+    lineHeight: 20,
-+  },
- });
+ };
 diff --git a/model.patch b/model.patch
-index 29d934d..3d2142f 100644
+index fbeda2e..e69de29 100644
 --- a/model.patch
 +++ b/model.patch
-@@ -1,106 +0,0 @@
--diff --git a/additional_backend_test.py b/additional_backend_test.py
--new file mode 100644
--index 0000000..9f3a03c
----- /dev/null
--+++ b/additional_backend_test.py
--@@ -0,0 +1,64 @@
--+#!/usr/bin/env python3
--+"""
--+Additional Backend API Testing for existing endpoints
--+"""
--+
--+import requests
--+import json
--+
--+# Backend URL from environment
--+BACKEND_URL = "https://freezetag-game.preview.emergentagent.com/api"
--+
--+def test_existing_endpoints():
--+    """Test some existing endpoints to ensure they're working"""
--+    print("🔍 Testing Additional Backend Endpoints...")
--+    
--+    # Test shop items
--+    try:
--+        shop_response = requests.get(f"{BACKEND_URL}/shop/items", timeout=10)
--+        if shop_response.status_code == 200:
--+            data = shop_response.json()
--+            items = data.get("items", [])
--+            print(f"✅ Shop Items: Found {len(items)} items")
--+        else:
--+            print(f"❌ Shop Items failed: {shop_response.status_code}")
--+    except Exception as e:
--+        print(f"❌ Shop Items error: {e}")
--+    
--+    # Test premium plans
--+    try:
--+        premium_response = requests.get(f"{BACKEND_URL}/shop/premium", timeout=10)
--+        if premium_response.status_code == 200:
--+            data = premium_response.json()
--+            plans = data.get("plans", {})
--+            print(f"✅ Premium Plans: Found {len(plans)} plans")
--+        else:
--+            print(f"❌ Premium Plans failed: {premium_response.status_code}")
--+    except Exception as e:
--+        print(f"❌ Premium Plans error: {e}")
--+    
--+    # Test leaderboard
--+    try:
--+        leaderboard_response = requests.get(f"{BACKEND_URL}/leaderboard", timeout=10)
--+        if leaderboard_response.status_code == 200:
--+            data = leaderboard_response.json()
--+            leaderboard = data.get("leaderboard", [])
--+            print(f"✅ Leaderboard: Found {len(leaderboard)} entries")
--+        else:
--+            print(f"❌ Leaderboard failed: {leaderboard_response.status_code}")
--+    except Exception as e:
--+        print(f"❌ Leaderboard error: {e}")
--+    
--+    # Test public rooms
--+    try:
--+        rooms_response = requests.get(f"{BACKEND_URL}/rooms/public", timeout=10)
--+        if rooms_response.status_code == 200:
--+            data = rooms_response.json()
--+            print(f"✅ Public Rooms: Found {len(data)} rooms")
--+        else:
--+            print(f"❌ Public Rooms failed: {rooms_response.status_code}")
--+    except Exception as e:
--+        print(f"❌ Public Rooms error: {e}")
--+
--+if __name__ == "__main__":
--+    test_existing_endpoints()
--\ No newline at end of file
--diff --git a/test_result.md b/test_result.md
--index 5a40c8d..609eaa8 100644
----- a/test_result.md
--+++ b/test_result.md
--@@ -288,15 +288,18 @@ frontend:
+@@ -1,287 +0,0 @@
+-diff --git a/frontend/app/(game)/bluetooth-setup.tsx b/frontend/app/(game)/bluetooth-setup.tsx
+-index 9c02fcf..892c04f 100644
+---- a/frontend/app/(game)/bluetooth-setup.tsx
+-+++ b/frontend/app/(game)/bluetooth-setup.tsx
+-@@ -39,7 +39,7 @@ export default function BluetoothSetupScreen() {
+-   const insets = useSafeAreaInsets();
+-   const { t } = useLanguage();
 -   
--   - task: "Test Freeze Functionality"
--     implemented: true
---    working: NA
--+    working: true
--     file: "app/(main)/home.tsx, server.py endpoint /api/game/freeze-test"
--     stuck_count: 0
--     priority: "high"
---    needs_retesting: true
--+    needs_retesting: false
--     status_history:
--       - working: NA
--         agent: "main"
--         comment: "Test freeze dugme sa animacijom dodato na Home ekran, backend endpoint kreiran"
--+      - working: true
--+        agent: "testing"
--+        comment: "Backend endpoint /api/game/freeze-test potpuno testiran i radi ispravno. Testovi prošli: 1) Endpoint radi sa validnim tokenom, 2) Vraća success: true, username i has_ble_device status, 3) Pravilno odbija zahteve bez tokena (422) i sa nevalidnim tokenom (401), 4) Testiran sa i bez BLE uređaja - oba scenarija rade, 5) BLE device save/get operacije rade, 6) Test eventi se čuvaju u test_events kolekciju. Svi zahtevani test scenariji uspešno prošli."
+--  const [bleManager] = useState(() => new BleManager());
+-+  const [bleManager] = useState(() => Platform.OS === 'web' ? null : new BleManager());
+-   const [scanning, setScanning] = useState(false);
+-   const [devices, setDevices] = useState<BluetoothDevice[]>([]);
+-   const [connectedDevice, setConnectedDevice] = useState<BluetoothDevice | null>(null);
+-@@ -59,26 +59,37 @@ export default function BluetoothSetupScreen() {
+-       if (scanTimeoutRef.current) {
+-         clearTimeout(scanTimeoutRef.current);
+-       }
+--      bleManager.stopDeviceScan();
+--      bleManager.destroy();
+-+      if (bleManager) {
+-+        bleManager.stopDeviceScan();
+-+        bleManager.destroy();
+-+      }
+-     };
+-   }, []);
 - 
-- metadata:
--   created_by: "main_agent"
--@@ -317,4 +320,6 @@ agent_communication:
--   - agent: "main"
--     message: "MVP implementiran sa svim osnovnim funkcionalnostima - auth, shop, premium, game mehanika"
--   - agent: "main"
---    message: "Implementirane BLE funkcionalnosti: 1) BLE status kartica na Home ekranu sa prikazom povezanog uređaja i linkom ka Bluetooth Setup; 2) Test Freeze dugme sa animacijom i backend endpoint POST /api/game/freeze-test; 3) Dopunjeni prevodi za Bluetooth Setup u svim jezicima (sr, en, es, de, fr, pt). Spremno za backend testiranje."
--\ No newline at end of file
--+    message: "Implementirane BLE funkcionalnosti: 1) BLE status kartica na Home ekranu sa prikazom povezanog uređaja i linkom ka Bluetooth Setup; 2) Test Freeze dugme sa animacijom i backend endpoint POST /api/game/freeze-test; 3) Dopunjeni prevodi za Bluetooth Setup u svim jezicima (sr, en, es, de, fr, pt). Spremno za backend testiranje."
--+  - agent: "testing"
--+    message: "Backend testiranje završeno uspešno. Test Freeze funkcionalnost potpuno radi - endpoint /api/game/freeze-test testiran u svim scenarijima (sa/bez BLE uređaja, validni/nevalidni tokeni). Svi zahtevani test scenariji prošli. Detektovan minor issue sa /api/rooms/public endpoint (ObjectId serialization), ali ne utiče na Test Freeze funkcionalnost. Kreiran backend_test.py za buduće testiranje."
--\ No newline at end of file
+-   const initializeBluetooth = async () => {
+-     try {
+-+      // Check if we're on web platform
+-+      if (Platform.OS === 'web') {
+-+        setBluetoothState(State.Unsupported);
+-+        setLoading(false);
+-+        return;
+-+      }
+-+
+-       // Request permissions for Android
+-       if (Platform.OS === 'android') {
+-         await requestAndroidPermissions();
+-       }
+- 
+-       // Check Bluetooth state
+--      const state = await bleManager.state();
+--      setBluetoothState(state);
+--
+--      // Subscribe to Bluetooth state changes
+--      bleManager.onStateChange((newState) => {
+--        setBluetoothState(newState);
+--      }, true);
+-+      if (bleManager) {
+-+        const state = await bleManager.state();
+-+        setBluetoothState(state);
+-+
+-+        // Subscribe to Bluetooth state changes
+-+        bleManager.onStateChange((newState) => {
+-+          setBluetoothState(newState);
+-+        }, true);
+-+      }
+- 
+-       setLoading(false);
+-     } catch (error) {
+-@@ -132,7 +143,7 @@ export default function BluetoothSetupScreen() {
+-   };
+- 
+-   const handleScan = async () => {
+--    if (bluetoothState !== State.PoweredOn) {
+-+    if (!bleManager || bluetoothState !== State.PoweredOn) {
+-       Alert.alert(
+-         t('bluetooth.bluetoothOff'),
+-         t('bluetooth.turnOnBluetooth'),
+-@@ -176,7 +187,9 @@ export default function BluetoothSetupScreen() {
+- 
+-     // Stop scanning after 10 seconds
+-     scanTimeoutRef.current = setTimeout(() => {
+--      bleManager.stopDeviceScan();
+-+      if (bleManager) {
+-+        bleManager.stopDeviceScan();
+-+      }
+-       setScanning(false);
+-     }, 10000);
+-   };
+-@@ -185,11 +198,21 @@ export default function BluetoothSetupScreen() {
+-     if (scanTimeoutRef.current) {
+-       clearTimeout(scanTimeoutRef.current);
+-     }
+--    bleManager.stopDeviceScan();
+-+    if (bleManager) {
+-+      bleManager.stopDeviceScan();
+-+    }
+-     setScanning(false);
+-   };
+- 
+-   const handleConnect = async (device: BluetoothDevice) => {
+-+    if (!bleManager) {
+-+      Alert.alert(
+-+        t('common.error'),
+-+        t('bluetooth.notAvailable')
+-+      );
+-+      return;
+-+    }
+-+
+-     try {
+-       setConnecting(device.id);
+-       
+-@@ -241,7 +264,7 @@ export default function BluetoothSetupScreen() {
+-   };
+- 
+-   const handleDisconnect = async () => {
+--    if (connectedDevice) {
+-+    if (connectedDevice && bleManager) {
+-       try {
+-         await bleManager.cancelDeviceConnection(connectedDevice.id);
+-         setConnectedDevice(null);
+-@@ -380,6 +403,19 @@ export default function BluetoothSetupScreen() {
+-           )}
+-         </View>
+- 
+-+        {/* Web Platform Warning */}
+-+        {Platform.OS === 'web' && (
+-+          <View style={styles.webWarningCard}>
+-+            <View style={styles.webWarningHeader}>
+-+              <Ionicons name="information-circle" size={24} color="#ffc107" />
+-+              <Text style={styles.webWarningTitle}>Bluetooth Not Available</Text>
+-+            </View>
+-+            <Text style={styles.webWarningText}>
+-+              Bluetooth functionality is only available on mobile devices. Please use the mobile app to connect to Bluetooth devices.
+-+            </Text>
+-+          </View>
+-+        )}
+-+
+-         {/* Connected Device Info */}
+-         {connectedDevice && (
+-           <View style={styles.connectedCard}>
+-@@ -443,12 +479,12 @@ export default function BluetoothSetupScreen() {
+-           <TouchableOpacity
+-             style={styles.scanButton}
+-             onPress={scanning ? handleStopScan : handleScan}
+--            disabled={bluetoothState !== State.PoweredOn}
+-+            disabled={Platform.OS === 'web' || bluetoothState !== State.PoweredOn}
+-             activeOpacity={0.8}
+-           >
+-             <LinearGradient
+-               colors={scanning ? ['#f44336', '#d32f2f'] : 
+--                      bluetoothState !== State.PoweredOn ? ['#5a7a9a', '#4a6a8a'] :
+-+                      (Platform.OS === 'web' || bluetoothState !== State.PoweredOn) ? ['#5a7a9a', '#4a6a8a'] :
+-                       ['#4fc3f7', '#0288d1']}
+-               style={styles.scanButtonGradient}
+-             >
+-@@ -906,4 +942,28 @@ const styles = StyleSheet.create({
+-     fontSize: 14,
+-     lineHeight: 20,
+-   },
+-+  webWarningCard: {
+-+    backgroundColor: 'rgba(255, 193, 7, 0.1)',
+-+    borderRadius: 16,
+-+    padding: 16,
+-+    marginBottom: 20,
+-+    borderWidth: 1,
+-+    borderColor: 'rgba(255, 193, 7, 0.3)',
+-+  },
+-+  webWarningHeader: {
+-+    flexDirection: 'row',
+-+    alignItems: 'center',
+-+    gap: 10,
+-+    marginBottom: 12,
+-+  },
+-+  webWarningTitle: {
+-+    color: '#ffc107',
+-+    fontSize: 16,
+-+    fontWeight: '600',
+-+  },
+-+  webWarningText: {
+-+    color: '#a8d4ff',
+-+    fontSize: 14,
+-+    lineHeight: 20,
+-+  },
+- });
+-diff --git a/model.patch b/model.patch
+-index 29d934d..3d2142f 100644
+---- a/model.patch
+-+++ b/model.patch
+-@@ -1,106 +0,0 @@
+--diff --git a/additional_backend_test.py b/additional_backend_test.py
+--new file mode 100644
+--index 0000000..9f3a03c
+----- /dev/null
+--+++ b/additional_backend_test.py
+--@@ -0,0 +1,64 @@
+--+#!/usr/bin/env python3
+--+"""
+--+Additional Backend API Testing for existing endpoints
+--+"""
+--+
+--+import requests
+--+import json
+--+
+--+# Backend URL from environment
+--+BACKEND_URL = "https://freezetag-game.preview.emergentagent.com/api"
+--+
+--+def test_existing_endpoints():
+--+    """Test some existing endpoints to ensure they're working"""
+--+    print("🔍 Testing Additional Backend Endpoints...")
+--+    
+--+    # Test shop items
+--+    try:
+--+        shop_response = requests.get(f"{BACKEND_URL}/shop/items", timeout=10)
+--+        if shop_response.status_code == 200:
+--+            data = shop_response.json()
+--+            items = data.get("items", [])
+--+            print(f"✅ Shop Items: Found {len(items)} items")
+--+        else:
+--+            print(f"❌ Shop Items failed: {shop_response.status_code}")
+--+    except Exception as e:
+--+        print(f"❌ Shop Items error: {e}")
+--+    
+--+    # Test premium plans
+--+    try:
+--+        premium_response = requests.get(f"{BACKEND_URL}/shop/premium", timeout=10)
+--+        if premium_response.status_code == 200:
+--+            data = premium_response.json()
+--+            plans = data.get("plans", {})
+--+            print(f"✅ Premium Plans: Found {len(plans)} plans")
+--+        else:
+--+            print(f"❌ Premium Plans failed: {premium_response.status_code}")
+--+    except Exception as e:
+--+        print(f"❌ Premium Plans error: {e}")
+--+    
+--+    # Test leaderboard
+--+    try:
+--+        leaderboard_response = requests.get(f"{BACKEND_URL}/leaderboard", timeout=10)
+--+        if leaderboard_response.status_code == 200:
+--+            data = leaderboard_response.json()
+--+            leaderboard = data.get("leaderboard", [])
+--+            print(f"✅ Leaderboard: Found {len(leaderboard)} entries")
+--+        else:
+--+            print(f"❌ Leaderboard failed: {leaderboard_response.status_code}")
+--+    except Exception as e:
+--+        print(f"❌ Leaderboard error: {e}")
+--+    
+--+    # Test public rooms
+--+    try:
+--+        rooms_response = requests.get(f"{BACKEND_URL}/rooms/public", timeout=10)
+--+        if rooms_response.status_code == 200:
+--+            data = rooms_response.json()
+--+            print(f"✅ Public Rooms: Found {len(data)} rooms")
+--+        else:
+--+            print(f"❌ Public Rooms failed: {rooms_response.status_code}")
+--+    except Exception as e:
+--+        print(f"❌ Public Rooms error: {e}")
+--+
+--+if __name__ == "__main__":
+--+    test_existing_endpoints()
+--\ No newline at end of file
+--diff --git a/test_result.md b/test_result.md
+--index 5a40c8d..609eaa8 100644
+----- a/test_result.md
+--+++ b/test_result.md
+--@@ -288,15 +288,18 @@ frontend:
+--   
+--   - task: "Test Freeze Functionality"
+--     implemented: true
+---    working: NA
+--+    working: true
+--     file: "app/(main)/home.tsx, server.py endpoint /api/game/freeze-test"
+--     stuck_count: 0
+--     priority: "high"
+---    needs_retesting: true
+--+    needs_retesting: false
+--     status_history:
+--       - working: NA
+--         agent: "main"
+--         comment: "Test freeze dugme sa animacijom dodato na Home ekran, backend endpoint kreiran"
+--+      - working: true
+--+        agent: "testing"
+--+        comment: "Backend endpoint /api/game/freeze-test potpuno testiran i radi ispravno. Testovi prošli: 1) Endpoint radi sa validnim tokenom, 2) Vraća success: true, username i has_ble_device status, 3) Pravilno odbija zahteve bez tokena (422) i sa nevalidnim tokenom (401), 4) Testiran sa i bez BLE uređaja - oba scenarija rade, 5) BLE device save/get operacije rade, 6) Test eventi se čuvaju u test_events kolekciju. Svi zahtevani test scenariji uspešno prošli."
+-- 
+-- metadata:
+--   created_by: "main_agent"
+--@@ -317,4 +320,6 @@ agent_communication:
+--   - agent: "main"
+--     message: "MVP implementiran sa svim osnovnim funkcionalnostima - auth, shop, premium, game mehanika"
+--   - agent: "main"
+---    message: "Implementirane BLE funkcionalnosti: 1) BLE status kartica na Home ekranu sa prikazom povezanog uređaja i linkom ka Bluetooth Setup; 2) Test Freeze dugme sa animacijom i backend endpoint POST /api/game/freeze-test; 3) Dopunjeni prevodi za Bluetooth Setup u svim jezicima (sr, en, es, de, fr, pt). Spremno za backend testiranje."
+--\ No newline at end of file
+--+    message: "Implementirane BLE funkcionalnosti: 1) BLE status kartica na Home ekranu sa prikazom povezanog uređaja i linkom ka Bluetooth Setup; 2) Test Freeze dugme sa animacijom i backend endpoint POST /api/game/freeze-test; 3) Dopunjeni prevodi za Bluetooth Setup u svim jezicima (sr, en, es, de, fr, pt). Spremno za backend testiranje."
+--+  - agent: "testing"
+--+    message: "Backend testiranje završeno uspešno. Test Freeze funkcionalnost potpuno radi - endpoint /api/game/freeze-test testiran u svim scenarijima (sa/bez BLE uređaja, validni/nevalidni tokeni). Svi zahtevani test scenariji prošli. Detektovan minor issue sa /api/rooms/public endpoint (ObjectId serialization), ali ne utiče na Test Freeze funkcionalnost. Kreiran backend_test.py za buduće testiranje."
+--\ No newline at end of file
