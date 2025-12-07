@@ -371,5 +371,6 @@ export default {
     savedDevice: 'Sačuvan uređaj',
     deviceDisconnected: 'Uređaj je prekinuo vezu',
     connectionFailed: 'Povezivanje nije uspelo',
+    notAvailable: 'Bluetooth nije dostupan na ovoj platformi',
   },
 };
