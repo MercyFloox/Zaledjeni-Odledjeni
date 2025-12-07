@@ -764,4 +764,91 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
   },
+  // BLE Section
+  bleSection: {
+    marginBottom: 24,
+  },
+  bleCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(79, 195, 247, 0.2)',
+  },
+  bleHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  bleInfo: {
+    flex: 1,
+  },
+  bleTitle: {
+    color: '#a8d4ff',
+    fontSize: 12,
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  bleStatus: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  bleConnected: {
+    color: '#4caf50',
+  },
+  bleDisconnected: {
+    color: '#5a7a9a',
+  },
+  bleDeviceName: {
+    color: '#4fc3f7',
+    fontSize: 12,
+    marginTop: 2,
+  },
+  bleSetupButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(79, 195, 247, 0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  testFreezeButton: {
+    borderRadius: 16,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  testFreezeGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    gap: 10,
+  },
+  testFreezeText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  freezeOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(41, 182, 246, 0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 16,
+  },
+  freezeText: {
+    color: '#29b6f6',
+    fontSize: 24,
+    fontWeight: '700',
+    marginTop: 16,
+  },
 });
