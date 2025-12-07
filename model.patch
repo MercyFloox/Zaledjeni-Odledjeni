@@ -1,0 +1,106 @@
+diff --git a/additional_backend_test.py b/additional_backend_test.py
+new file mode 100644
+index 0000000..9f3a03c
+--- /dev/null
++++ b/additional_backend_test.py
+@@ -0,0 +1,64 @@
++#!/usr/bin/env python3
++"""
++Additional Backend API Testing for existing endpoints
++"""
++
++import requests
++import json
++
++# Backend URL from environment
++BACKEND_URL = "https://freezetag-game.preview.emergentagent.com/api"
++
++def test_existing_endpoints():
++    """Test some existing endpoints to ensure they're working"""
++    print("🔍 Testing Additional Backend Endpoints...")
++    
++    # Test shop items
++    try:
++        shop_response = requests.get(f"{BACKEND_URL}/shop/items", timeout=10)
++        if shop_response.status_code == 200:
++            data = shop_response.json()
++            items = data.get("items", [])
++            print(f"✅ Shop Items: Found {len(items)} items")
++        else:
++            print(f"❌ Shop Items failed: {shop_response.status_code}")
++    except Exception as e:
++        print(f"❌ Shop Items error: {e}")
++    
++    # Test premium plans
++    try:
++        premium_response = requests.get(f"{BACKEND_URL}/shop/premium", timeout=10)
++        if premium_response.status_code == 200:
++            data = premium_response.json()
++            plans = data.get("plans", {})
++            print(f"✅ Premium Plans: Found {len(plans)} plans")
++        else:
++            print(f"❌ Premium Plans failed: {premium_response.status_code}")
++    except Exception as e:
++        print(f"❌ Premium Plans error: {e}")
++    
++    # Test leaderboard
++    try:
++        leaderboard_response = requests.get(f"{BACKEND_URL}/leaderboard", timeout=10)
++        if leaderboard_response.status_code == 200:
++            data = leaderboard_response.json()
++            leaderboard = data.get("leaderboard", [])
++            print(f"✅ Leaderboard: Found {len(leaderboard)} entries")
++        else:
++            print(f"❌ Leaderboard failed: {leaderboard_response.status_code}")
++    except Exception as e:
++        print(f"❌ Leaderboard error: {e}")
++    
++    # Test public rooms
++    try:
++        rooms_response = requests.get(f"{BACKEND_URL}/rooms/public", timeout=10)
++        if rooms_response.status_code == 200:
++            data = rooms_response.json()
++            print(f"✅ Public Rooms: Found {len(data)} rooms")
++        else:
++            print(f"❌ Public Rooms failed: {rooms_response.status_code}")
++    except Exception as e:
++        print(f"❌ Public Rooms error: {e}")
++
++if __name__ == "__main__":
++    test_existing_endpoints()
+\ No newline at end of file
+diff --git a/test_result.md b/test_result.md
+index 5a40c8d..609eaa8 100644
+--- a/test_result.md
++++ b/test_result.md
+@@ -288,15 +288,18 @@ frontend:
+   
+   - task: "Test Freeze Functionality"
+     implemented: true
+-    working: NA
++    working: true
+     file: "app/(main)/home.tsx, server.py endpoint /api/game/freeze-test"
+     stuck_count: 0
+     priority: "high"
+-    needs_retesting: true
++    needs_retesting: false
+     status_history:
+       - working: NA
+         agent: "main"
+         comment: "Test freeze dugme sa animacijom dodato na Home ekran, backend endpoint kreiran"
++      - working: true
++        agent: "testing"
++        comment: "Backend endpoint /api/game/freeze-test potpuno testiran i radi ispravno. Testovi prošli: 1) Endpoint radi sa validnim tokenom, 2) Vraća success: true, username i has_ble_device status, 3) Pravilno odbija zahteve bez tokena (422) i sa nevalidnim tokenom (401), 4) Testiran sa i bez BLE uređaja - oba scenarija rade, 5) BLE device save/get operacije rade, 6) Test eventi se čuvaju u test_events kolekciju. Svi zahtevani test scenariji uspešno prošli."
+ 
+ metadata:
+   created_by: "main_agent"
+@@ -317,4 +320,6 @@ agent_communication:
+   - agent: "main"
+     message: "MVP implementiran sa svim osnovnim funkcionalnostima - auth, shop, premium, game mehanika"
+   - agent: "main"
+-    message: "Implementirane BLE funkcionalnosti: 1) BLE status kartica na Home ekranu sa prikazom povezanog uređaja i linkom ka Bluetooth Setup; 2) Test Freeze dugme sa animacijom i backend endpoint POST /api/game/freeze-test; 3) Dopunjeni prevodi za Bluetooth Setup u svim jezicima (sr, en, es, de, fr, pt). Spremno za backend testiranje."
+\ No newline at end of file
++    message: "Implementirane BLE funkcionalnosti: 1) BLE status kartica na Home ekranu sa prikazom povezanog uređaja i linkom ka Bluetooth Setup; 2) Test Freeze dugme sa animacijom i backend endpoint POST /api/game/freeze-test; 3) Dopunjeni prevodi za Bluetooth Setup u svim jezicima (sr, en, es, de, fr, pt). Spremno za backend testiranje."
++  - agent: "testing"
++    message: "Backend testiranje završeno uspešno. Test Freeze funkcionalnost potpuno radi - endpoint /api/game/freeze-test testiran u svim scenarijima (sa/bez BLE uređaja, validni/nevalidni tokeni). Svi zahtevani test scenariji prošli. Detektovan minor issue sa /api/rooms/public endpoint (ObjectId serialization), ali ne utiče na Test Freeze funkcionalnost. Kreiran backend_test.py za buduće testiranje."
+\ No newline at end of file
