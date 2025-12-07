@@ -273,16 +273,42 @@ frontend:
       - working: true
         agent: "main"
         comment: "Play ekran sa freeze/unfreeze mehanikom"
+  
+  - task: "BLE Status Display on Home Screen"
+    implemented: true
+    working: NA
+    file: "app/(main)/home.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: NA
+        agent: "main"
+        comment: "BLE status kartica dodata na Home ekran, prikazuje status i link ka Bluetooth Setup ekranu"
+  
+  - task: "Test Freeze Functionality"
+    implemented: true
+    working: NA
+    file: "app/(main)/home.tsx, server.py endpoint /api/game/freeze-test"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: NA
+        agent: "main"
+        comment: "Test freeze dugme sa animacijom dodato na Home ekran, backend endpoint kreiran"
 
 metadata:
   created_by: "main_agent"
   version: "1.0"
-  test_sequence: 1
+  test_sequence: 2
   run_ui: false
 
 test_plan:
   current_focus:
-    - "Full game flow testing"
+    - "BLE Status Display on Home Screen"
+    - "Test Freeze Functionality"
+    - "Backend endpoint /api/game/freeze-test"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
@@ -290,3 +316,5 @@ test_plan:
 agent_communication:
   - agent: "main"
     message: "MVP implementiran sa svim osnovnim funkcionalnostima - auth, shop, premium, game mehanika"
+  - agent: "main"
+    message: "Implementirane BLE funkcionalnosti: 1) BLE status kartica na Home ekranu sa prikazom povezanog uređaja i linkom ka Bluetooth Setup; 2) Test Freeze dugme sa animacijom i backend endpoint POST /api/game/freeze-test; 3) Dopunjeni prevodi za Bluetooth Setup u svim jezicima (sr, en, es, de, fr, pt). Spremno za backend testiranje."
