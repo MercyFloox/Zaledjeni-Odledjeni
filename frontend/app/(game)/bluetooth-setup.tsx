@@ -39,7 +39,7 @@ export default function BluetoothSetupScreen() {
   const insets = useSafeAreaInsets();
   const { t } = useLanguage();
   
-  const [bleManager] = useState(() => new BleManager());
+  const [bleManager] = useState(() => Platform.OS === 'web' ? null : new BleManager());
   const [scanning, setScanning] = useState(false);
   const [devices, setDevices] = useState<BluetoothDevice[]>([]);
   const [connectedDevice, setConnectedDevice] = useState<BluetoothDevice | null>(null);
