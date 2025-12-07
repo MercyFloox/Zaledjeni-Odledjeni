@@ -146,7 +146,7 @@ export default function HomeScreen() {
 
   const handleCreateRoom = async () => {
     if (!roomName.trim()) {
-      Alert.alert('Greska', 'Unesite ime sobe');
+      Alert.alert(t('common.error'), t('home.errors.enterRoomName'));
       return;
     }
 
