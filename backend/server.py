@@ -260,6 +260,34 @@ PREMIUM_FEATURES = {
     }
 }
 
+# ==================== HEALTH CHECK ====================
+
+import time
+
+# Store server start time
+SERVER_START_TIME = time.time()
+
+@api_router.get("/health")
+async def health_check():
+    """Health check endpoint with MongoDB connectivity test"""
+    try:
+        # Test MongoDB connection with ping
+        await db.command("ping")
+        db_status = "connected"
+    except Exception as e:
+        logger.error(f"MongoDB connection failed: {e}")
+        db_status = "disconnected"
+    
+    # Calculate uptime
+    uptime_seconds = int(time.time() - SERVER_START_TIME)
+    
+    return {
+        "status": "ok",
+        "database": db_status,
+        "uptime": uptime_seconds,
+        "version": "1.0"
+    }
+
 # ==================== AUTH ROUTES ====================
 
 @api_router.post("/auth/register")
