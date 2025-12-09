@@ -457,7 +457,22 @@ async def join_room(request: JoinRoomRequest, token: str):
     # Check if already in room
     for p in room["players"]:
         if p["id"] == str(user["_id"]):
-            return {"room": room}
+            # Return clean response
+            room_response = {
+                "id": str(room["_id"]),
+                "code": room["code"],
+                "name": room["name"],
+                "host_id": room.get("host_id", ""),
+                "players": room["players"],
+                "status": room["status"],
+                "current_mraz": room.get("current_mraz"),
+                "frozen_players": room.get("frozen_players", []),
+                "max_players": room.get("max_players", 10),
+                "is_private": room.get("is_private", False),
+                "settings": room.get("settings", {}),
+                "created_at": room.get("created_at").isoformat() if room.get("created_at") else None
+            }
+            return {"room": room_response}
     
     new_player = {
         "id": str(user["_id"]),
@@ -473,13 +488,26 @@ async def join_room(request: JoinRoomRequest, token: str):
         {"$push": {"players": new_player}}
     )
     
-    room["players"].append(new_player)
-    room["id"] = str(room["_id"])
+    # Create clean response
+    room_response = {
+        "id": str(room["_id"]),
+        "code": room["code"],
+        "name": room["name"],
+        "host_id": room.get("host_id", ""),
+        "players": room["players"] + [new_player],
+        "status": room["status"],
+        "current_mraz": room.get("current_mraz"),
+        "frozen_players": room.get("frozen_players", []),
+        "max_players": room.get("max_players", 10),
+        "is_private": room.get("is_private", False),
+        "settings": room.get("settings", {}),
+        "created_at": room.get("created_at").isoformat() if room.get("created_at") else None
+    }
     
     # Update active games
-    active_games[request.room_code.upper()] = room
+    active_games[request.room_code.upper()] = room_response
     
-    return {"room": room}
+    return {"room": room_response}
 
 @api_router.get("/rooms/public")
 async def get_public_rooms():
