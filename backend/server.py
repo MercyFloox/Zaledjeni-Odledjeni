@@ -393,7 +393,7 @@ async def create_room(request: CreateRoomRequest, token: str):
         raise HTTPException(status_code=401, detail="Neautorizovan pristup")
     
     room_code = generate_room_code()
-    room = {
+    room_doc = {
         "code": room_code,
         "name": request.name,
         "host_id": str(user["_id"]),
@@ -418,13 +418,28 @@ async def create_room(request: CreateRoomRequest, token: str):
         "created_at": datetime.utcnow()
     }
     
-    result = await db.rooms.insert_one(room)
-    room["id"] = str(result.inserted_id)
+    result = await db.rooms.insert_one(room_doc)
+    
+    # Create clean response without ObjectId
+    room_response = {
+        "id": str(result.inserted_id),
+        "code": room_code,
+        "name": request.name,
+        "host_id": str(user["_id"]),
+        "players": room_doc["players"],
+        "status": "waiting",
+        "current_mraz": None,
+        "frozen_players": [],
+        "max_players": request.max_players,
+        "is_private": request.is_private,
+        "settings": room_doc["settings"],
+        "created_at": room_doc["created_at"].isoformat()
+    }
     
     # Store in active games
-    active_games[room_code] = room
+    active_games[room_code] = room_response
     
-    return {"room": room}
+    return {"room": room_response}
 
 @api_router.post("/rooms/join")
 async def join_room(request: JoinRoomRequest, token: str):
