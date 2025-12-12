@@ -861,10 +861,34 @@ async def freeze_player(sid, data):
     frozen_player_id = data.get("frozen_player_id")
     mraz_id = data.get("mraz_id")
     
-    # Update frozen list
+    room = await db.rooms.find_one({"code": room_code})
+    if not room:
+        return
+    
+    # Verify that mraz_id is actually the current Mraz
+    if room.get("current_mraz") != mraz_id:
+        return  # Only Mraz can freeze
+    
+    # Verify player is not already frozen
+    if frozen_player_id in room.get("frozen_players", []):
+        return
+    
+    # Store first frozen player for next round's Mraz
+    first_frozen = room.get("first_frozen")
+    if not first_frozen and frozen_player_id != mraz_id:
+        await db.rooms.update_one(
+            {"code": room_code},
+            {"$set": {"first_frozen": frozen_player_id}}
+        )
+        first_frozen = frozen_player_id
+    
+    # Update frozen list and player status
     await db.rooms.update_one(
         {"code": room_code},
-        {"$addToSet": {"frozen_players": frozen_player_id}}
+        {
+            "$addToSet": {"frozen_players": frozen_player_id},
+            "$set": {f"player_statuses.{frozen_player_id}": "frozen"}
+        }
     )
     
     # Update player stats
@@ -886,9 +910,27 @@ async def freeze_player(sid, data):
         
         if set(non_mraz_players) <= set(frozen):
             # All players frozen - game over
-            await sio.emit('game_over', {
-                'winner': room.get("current_mraz"),
-                'frozen_players': frozen
+            # Increment games_won for Mraz
+            await db.users.update_one(
+                {"_id": ObjectId(mraz_id)},
+                {"$inc": {"stats.games_won": 1, "stats.times_as_mraz": 1}}
+            )
+            
+            # Update room status
+            await db.rooms.update_one(
+                {"code": room_code},
+                {"$set": {"status": "finished"}}
+            )
+            
+            # Get winner info
+            winner_user = await db.users.find_one({"_id": ObjectId(mraz_id)})
+            
+            await sio.emit('round_over', {
+                'winner_id': mraz_id,
+                'winner_username': winner_user["username"] if winner_user else "Unknown",
+                'frozen_players': frozen,
+                'next_mraz': first_frozen,
+                'round_number': room.get("round_number", 1)
             }, room=room_code)
 
 @sio.event
