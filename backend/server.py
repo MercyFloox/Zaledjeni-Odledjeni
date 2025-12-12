@@ -541,8 +541,25 @@ async def get_room(room_code: str):
     room = await db.rooms.find_one({"code": room_code.upper()})
     if not room:
         raise HTTPException(status_code=404, detail="Soba nije pronadjena")
-    room["id"] = str(room["_id"])
-    return room
+    
+    # Create clean response without ObjectId
+    room_response = {
+        "id": str(room["_id"]),
+        "code": room.get("code", ""),
+        "name": room.get("name", ""),
+        "host_id": room.get("host_id", ""),
+        "players": room.get("players", []),
+        "status": room.get("status", "waiting"),
+        "current_mraz": room.get("current_mraz"),
+        "frozen_players": room.get("frozen_players", []),
+        "player_statuses": room.get("player_statuses", {}),
+        "max_players": room.get("max_players", 10),
+        "is_private": room.get("is_private", False),
+        "settings": room.get("settings", {}),
+        "round_number": room.get("round_number", 0),
+        "created_at": room.get("created_at").isoformat() if room.get("created_at") else None,
+    }
+    return room_response
 
 # ==================== SHOP ROUTES ====================
 
