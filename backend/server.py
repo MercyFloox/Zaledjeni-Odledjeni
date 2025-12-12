@@ -940,10 +940,28 @@ async def unfreeze_player(sid, data):
     frozen_player_id = data.get("frozen_player_id")
     unfreezer_id = data.get("unfreezer_id")
     
-    # Remove from frozen list
+    room = await db.rooms.find_one({"code": room_code})
+    if not room:
+        return
+    
+    # Verify unfreezer is not Mraz and is active
+    if unfreezer_id == room.get("current_mraz"):
+        return  # Mraz cannot unfreeze
+    
+    if unfreezer_id in room.get("frozen_players", []):
+        return  # Frozen players cannot unfreeze
+    
+    # Verify target is actually frozen
+    if frozen_player_id not in room.get("frozen_players", []):
+        return
+    
+    # Remove from frozen list and update status
     await db.rooms.update_one(
         {"code": room_code},
-        {"$pull": {"frozen_players": frozen_player_id}}
+        {
+            "$pull": {"frozen_players": frozen_player_id},
+            "$set": {f"player_statuses.{frozen_player_id}": "active"}
+        }
     )
     
     # Update stats
@@ -955,6 +973,61 @@ async def unfreeze_player(sid, data):
     await sio.emit('player_unfrozen', {
         'unfrozen_player_id': frozen_player_id,
         'unfreezer_id': unfreezer_id
+    }, room=room_code)
+
+@sio.event
+async def restart_round(sid, data):
+    """Restart a new round in the same room"""
+    room_code = data.get("room_code")
+    
+    room = await db.rooms.find_one({"code": room_code})
+    if not room:
+        return
+    
+    # Next Mraz is the first frozen player from previous round
+    next_mraz_id = room.get("first_frozen")
+    
+    # If no first_frozen, pick random
+    players = room.get("players", [])
+    if not next_mraz_id and players:
+        next_mraz = random.choice(players)
+        next_mraz_id = next_mraz["id"]
+    
+    # Initialize player statuses
+    player_statuses = {}
+    for player in players:
+        if player["id"] == next_mraz_id:
+            player_statuses[player["id"]] = "mraz"
+        else:
+            player_statuses[player["id"]] = "active"
+    
+    # Update room
+    await db.rooms.update_one(
+        {"code": room_code},
+        {
+            "$set": {
+                "status": "playing",
+                "current_mraz": next_mraz_id,
+                "frozen_players": [],
+                "player_statuses": player_statuses,
+                "game_started_at": datetime.utcnow(),
+                "first_frozen": None
+            },
+            "$inc": {"round_number": 1}
+        }
+    )
+    
+    # Get new round number
+    updated_room = await db.rooms.find_one({"code": room_code})
+    
+    # Get mraz username
+    mraz_user = await db.users.find_one({"_id": ObjectId(next_mraz_id)})
+    
+    await sio.emit('game_started', {
+        'mraz_id': next_mraz_id,
+        'mraz_username': mraz_user["username"] if mraz_user else "Unknown",
+        'player_statuses': player_statuses,
+        'round_number': updated_room.get("round_number", 1)
     }, room=room_code)
 
 @sio.event
