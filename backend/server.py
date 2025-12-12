@@ -816,20 +816,42 @@ async def start_game(sid, data):
         players = room.get("players", [])
         if players:
             mraz = random.choice(players)
+            
+            # Initialize player statuses
+            player_statuses = {}
+            for player in players:
+                if player["id"] == mraz["id"]:
+                    player_statuses[player["id"]] = "mraz"
+                else:
+                    player_statuses[player["id"]] = "active"
+            
             await db.rooms.update_one(
                 {"code": room_code},
                 {
                     "$set": {
                         "status": "playing",
                         "current_mraz": mraz["id"],
-                        "game_started_at": datetime.utcnow()
+                        "frozen_players": [],
+                        "player_statuses": player_statuses,
+                        "game_started_at": datetime.utcnow(),
+                        "round_number": room.get("round_number", 0) + 1,
+                        "first_frozen": None
                     }
                 }
             )
             
+            # Increment games_played for all players
+            for player in players:
+                await db.users.update_one(
+                    {"_id": ObjectId(player["id"])},
+                    {"$inc": {"stats.games_played": 1}}
+                )
+            
             await sio.emit('game_started', {
                 'mraz_id': mraz["id"],
-                'mraz_username': mraz["username"]
+                'mraz_username': mraz["username"],
+                'player_statuses': player_statuses,
+                'round_number': room.get("round_number", 0) + 1
             }, room=room_code)
 
 @sio.event
