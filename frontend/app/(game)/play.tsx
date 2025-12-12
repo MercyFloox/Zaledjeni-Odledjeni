@@ -4,47 +4,46 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  Animated,
-  Dimensions,
+  ScrollView,
+  FlatList,
+  Modal,
   Alert,
-  Vibration,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient/build/LinearGradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Audio } from 'expo-av';
 import { io, Socket } from 'socket.io-client';
+import { useLanguage } from '../../src/context/LanguageContext';
 
 const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL || '';
-const { width, height } = Dimensions.get('window');
 
 interface Player {
   id: string;
   username: string;
-  is_frozen: boolean;
+  status: 'mraz' | 'active' | 'frozen';
 }
 
 export default function PlayScreen() {
   const router = useRouter();
-  const { code, mraz } = useLocalSearchParams<{ code: string; mraz: string }>();
+  const { code } = useLocalSearchParams<{ code: string }>();
   const insets = useSafeAreaInsets();
+  const { t } = useLanguage();
   
   const [user, setUser] = useState<any>(null);
-  const [isMraz, setIsMraz] = useState(false);
-  const [isFrozen, setIsFrozen] = useState(false);
+  const [currentMraz, setCurrentMraz] = useState<string | null>(null);
+  const [playerStatuses, setPlayerStatuses] = useState<{ [key: string]: string }>({});
   const [players, setPlayers] = useState<Player[]>([]);
-  const [frozenPlayers, setFrozenPlayers] = useState<string[]>([]);
   const [gameTime, setGameTime] = useState(0);
-  const [gameOver, setGameOver] = useState(false);
-  const [winner, setWinner] = useState<string | null>(null);
+  const [roundNumber, setRoundNumber] = useState(1);
+  
+  // Round Over state
+  const [roundOver, setRoundOver] = useState(false);
+  const [winner, setWinner] = useState<any>(null);
+  const [nextMraz, setNextMraz] = useState<string | null>(null);
   
   const socketRef = useRef<Socket | null>(null);
-  const freezeSound = useRef<Audio.Sound | null>(null);
-  const unfreezeSound = useRef<Audio.Sound | null>(null);
-  const pulseAnim = useRef(new Animated.Value(1)).current;
-  const freezeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     loadData();
@@ -52,37 +51,17 @@ export default function PlayScreen() {
       if (socketRef.current) {
         socketRef.current.disconnect();
       }
-      freezeSound.current?.unloadAsync();
-      unfreezeSound.current?.unloadAsync();
     };
   }, []);
 
   useEffect(() => {
-    if (!gameOver) {
+    if (!roundOver) {
       const timer = setInterval(() => {
         setGameTime(prev => prev + 1);
       }, 1000);
       return () => clearInterval(timer);
     }
-  }, [gameOver]);
-
-  useEffect(() => {
-    // Pulse animation for action button
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulseAnim, {
-          toValue: 1.1,
-          duration: 1000,
-          useNativeDriver: true,
-        }),
-        Animated.timing(pulseAnim, {
-          toValue: 1,
-          duration: 1000,
-          useNativeDriver: true,
-        }),
-      ])
-    ).start();
-  }, []);
+  }, [roundOver]);
 
   const loadData = async () => {
     try {
@@ -90,28 +69,10 @@ export default function PlayScreen() {
       if (userData) {
         const parsedUser = JSON.parse(userData);
         setUser(parsedUser);
-        setIsMraz(mraz === parsedUser.id);
         connectSocket(parsedUser);
       }
-      await loadSounds();
     } catch (error) {
       console.error('Error loading data:', error);
-    }
-  };
-
-  const loadSounds = async () => {
-    try {
-      const { sound: freeze } = await Audio.Sound.createAsync(
-        require('../../assets/sounds/freeze.mp3')
-      );
-      freezeSound.current = freeze;
-      
-      const { sound: unfreeze } = await Audio.Sound.createAsync(
-        require('../../assets/sounds/unfreeze.mp3')
-      );
-      unfreezeSound.current = unfreeze;
-    } catch (error) {
-      console.log('Sound files not found, continuing without sounds');
     }
   };
 
@@ -128,106 +89,151 @@ export default function PlayScreen() {
       });
     });
 
-    socketRef.current.on('player_frozen', async (data) => {
+    socketRef.current.on('game_started', (data) => {
+      console.log('Game started:', data);
+      setCurrentMraz(data.mraz_id);
+      setPlayerStatuses(data.player_statuses || {});
+      setRoundNumber(data.round_number || 1);
+      setRoundOver(false);
+      setGameTime(0);
+      
+      // Update players list with statuses
+      const updatedPlayers: Player[] = Object.keys(data.player_statuses || {}).map(playerId => ({
+        id: playerId,
+        username: playerId === userData.id ? userData.username : `Player ${playerId.slice(0, 4)}`,
+        status: data.player_statuses[playerId],
+      }));
+      setPlayers(updatedPlayers);
+    });
+
+    socketRef.current.on('player_frozen', (data) => {
       console.log('Player frozen:', data);
-      if (data.frozen_player_id === userData.id) {
-        setIsFrozen(true);
-        playFreezeAnimation();
-        try {
-          await freezeSound.current?.replayAsync();
-        } catch (e) {}
-        Vibration.vibrate([0, 100, 50, 100]);
-      }
-      setFrozenPlayers(prev => [...prev, data.frozen_player_id]);
+      setPlayerStatuses(prev => ({
+        ...prev,
+        [data.frozen_player_id]: 'frozen'
+      }));
     });
 
-    socketRef.current.on('player_unfrozen', async (data) => {
+    socketRef.current.on('player_unfrozen', (data) => {
       console.log('Player unfrozen:', data);
-      if (data.unfrozen_player_id === userData.id) {
-        setIsFrozen(false);
-        playUnfreezeAnimation();
-        try {
-          await unfreezeSound.current?.replayAsync();
-        } catch (e) {}
-        Vibration.vibrate(100);
-      }
-      setFrozenPlayers(prev => prev.filter(id => id !== data.unfrozen_player_id));
+      setPlayerStatuses(prev => ({
+        ...prev,
+        [data.unfrozen_player_id]: 'active'
+      }));
     });
 
-    socketRef.current.on('game_over', (data) => {
-      console.log('Game over:', data);
-      setGameOver(true);
-      setWinner(data.winner);
+    socketRef.current.on('round_over', (data) => {
+      console.log('Round over:', data);
+      setRoundOver(true);
+      setWinner({
+        id: data.winner_id,
+        username: data.winner_username,
+      });
+      setNextMraz(data.next_mraz);
     });
 
-    socketRef.current.on('proximity_event', (data) => {
-      console.log('Proximity detected:', data);
-      // Handle proximity detection
+    socketRef.current.on('player_joined', (data) => {
+      console.log('Player joined:', data);
+    });
+
+    socketRef.current.on('player_left', (data) => {
+      console.log('Player left:', data);
     });
   };
 
-  const playFreezeAnimation = () => {
-    Animated.timing(freezeAnim, {
-      toValue: 1,
-      duration: 500,
-      useNativeDriver: false,
-    }).start();
-  };
+  const myStatus = user ? playerStatuses[user.id] : 'active';
+  const isMraz = myStatus === 'mraz';
+  const isFrozen = myStatus === 'frozen';
+  const isActive = myStatus === 'active';
 
-  const playUnfreezeAnimation = () => {
-    Animated.timing(freezeAnim, {
-      toValue: 0,
-      duration: 500,
-      useNativeDriver: false,
-    }).start();
-  };
-
-  const handleFreeze = (targetId: string) => {
-    if (!isMraz || gameOver) return;
+  const handleFreeze = () => {
+    if (!isMraz || roundOver) return;
     
-    socketRef.current?.emit('freeze_player', {
-      room_code: code,
-      frozen_player_id: targetId,
-      mraz_id: user?.id,
-    });
-  };
-
-  const handleUnfreeze = (targetId: string) => {
-    if (isMraz || isFrozen || gameOver) return;
+    // Get list of active (non-frozen) players that are not Mraz
+    const activeTargets = Object.keys(playerStatuses).filter(
+      id => id !== user?.id && playerStatuses[id] === 'active'
+    );
     
-    socketRef.current?.emit('unfreeze_player', {
-      room_code: code,
-      frozen_player_id: targetId,
-      unfreezer_id: user?.id,
-    });
-  };
+    if (activeTargets.length === 0) {
+      Alert.alert(t('common.info') || 'Info', 'Nema igrača za zamrzavanje');
+      return;
+    }
 
-  // Simulate proximity detection (in real app, this would use Bluetooth)
-  const simulateProximity = () => {
     Alert.alert(
-      'Simulacija dodira',
-      isMraz 
-        ? 'Izaberi igraca za zamrzavanje (u pravoj igri ovo bi bilo automatski preko Bluetooth-a)'
-        : isFrozen 
-          ? 'Zaledjen si! Cekaj da te neko odledi.'
-          : 'Izaberi zaledjenog igraca za odledjivanje',
+      t('game.freeze') || 'Zamrzni',
+      'Izaberi igrača za zamrzavanje:',
       [
-        { text: 'Otkazi', style: 'cancel' },
-        {
-          text: 'Test zamrzni/odledi',
+        { text: t('common.cancel') || 'Otkaži', style: 'cancel' },
+        ...activeTargets.slice(0, 3).map(targetId => ({
+          text: `Player ${targetId.slice(0, 6)}`,
           onPress: () => {
-            if (isMraz) {
-              // Simulate freezing a random player
-              const otherPlayers = players.filter(p => p.id !== user?.id && !frozenPlayers.includes(p.id));
-              if (otherPlayers.length > 0) {
-                handleFreeze(otherPlayers[0].id);
-              }
-            } else if (!isFrozen) {
-              // Simulate unfreezing
-              if (frozenPlayers.length > 0) {
-                handleUnfreeze(frozenPlayers[0]);
-              }
+            socketRef.current?.emit('freeze_player', {
+              room_code: code,
+              frozen_player_id: targetId,
+              mraz_id: user?.id,
+            });
+          },
+        })),
+      ]
+    );
+  };
+
+  const handleUnfreeze = () => {
+    if (isMraz || isFrozen || roundOver) return;
+    
+    // Get list of frozen players
+    const frozenTargets = Object.keys(playerStatuses).filter(
+      id => playerStatuses[id] === 'frozen'
+    );
+    
+    if (frozenTargets.length === 0) {
+      Alert.alert(t('common.info') || 'Info', 'Nema zamrznutih igrača');
+      return;
+    }
+
+    Alert.alert(
+      t('game.unfreeze') || 'Odledi',
+      'Izaberi igrača za odleđivanje:',
+      [
+        { text: t('common.cancel') || 'Otkaži', style: 'cancel' },
+        ...frozenTargets.slice(0, 3).map(targetId => ({
+          text: `Player ${targetId.slice(0, 6)}`,
+          onPress: () => {
+            socketRef.current?.emit('unfreeze_player', {
+              room_code: code,
+              frozen_player_id: targetId,
+              unfreezer_id: user?.id,
+            });
+          },
+        })),
+      ]
+    );
+  };
+
+  const handleRestartRound = () => {
+    socketRef.current?.emit('restart_round', {
+      room_code: code,
+    });
+  };
+
+  const handleExitGame = () => {
+    Alert.alert(
+      t('game.leaveGame') || 'Napusti igru',
+      t('game.leaveGameConfirm') || 'Da li ste sigurni?',
+      [
+        { text: t('common.cancel') || 'Otkaži', style: 'cancel' },
+        {
+          text: t('game.leaveGame') || 'Napusti',
+          style: 'destructive',
+          onPress: () => {
+            if (socketRef.current) {
+              socketRef.current.emit('leave_game', {
+                room_code: code,
+                player_id: user?.id,
+              });
+              socketRef.current.disconnect();
             }
+            router.replace('/(main)/home');
           },
         },
       ]
@@ -240,57 +246,66 @@ export default function PlayScreen() {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const handleExitGame = () => {
-    Alert.alert(
-      'Napusti igru',
-      'Da li ste sigurni da zelite da napustite igru?',
-      [
-        { text: 'Otkazi', style: 'cancel' },
-        {
-          text: 'Napusti',
-          style: 'destructive',
-          onPress: () => router.replace('/(main)/home'),
-        },
-      ]
-    );
+  const getStatusColor = (status: string) => {
+    if (status === 'mraz') return '#29b6f6';
+    if (status === 'frozen') return '#4fc3f7';
+    return '#4caf50';
   };
 
-  const backgroundColor = freezeAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['rgba(10, 22, 40, 1)', 'rgba(79, 195, 247, 0.3)'],
-  });
+  const getStatusText = (status: string) => {
+    if (status === 'mraz') return 'MRAZ';
+    if (status === 'frozen') return 'ZAMRZNUT';
+    return 'ACTIVE';
+  };
 
-  if (gameOver) {
+  // Round Over Modal
+  if (roundOver) {
     return (
       <LinearGradient
         colors={['#0a1628', '#1a3a5c', '#0d2137']}
         style={[styles.container, { paddingTop: insets.top }]}
       >
-        <View style={styles.gameOverContainer}>
+        <View style={styles.roundOverContainer}>
           <Ionicons name="trophy" size={80} color="#ffd700" />
-          <Text style={styles.gameOverTitle}>Igra Zavrsena!</Text>
-          <Text style={styles.gameOverSubtitle}>
-            {winner === user?.id ? 'Pobedili ste!' : 'Mraz je pobedio!'}
+          <Text style={styles.roundOverTitle}>{t('game.gameOver') || 'Runda Završena!'}</Text>
+          <Text style={styles.roundOverSubtitle}>
+            {winner?.id === user?.id 
+              ? t('game.youWon') || 'Pobedili ste!' 
+              : `${winner?.username} je pobedio!`}
           </Text>
-          <Text style={styles.gameTime}>Vreme igre: {formatTime(gameTime)}</Text>
-          
+          <Text style={styles.gameTime}>
+            {t('game.gameTime') || 'Vreme'}: {formatTime(gameTime)}
+          </Text>
+          <Text style={styles.roundNumber}>
+            Runda: {roundNumber}
+          </Text>
+
           <View style={styles.statsContainer}>
             <View style={styles.statItem}>
-              <Text style={styles.statValue}>{frozenPlayers.length}</Text>
-              <Text style={styles.statLabel}>Zaledjeno</Text>
+              <Text style={styles.statLabel}>Sledeći Mraz:</Text>
+              <Text style={styles.statValue}>
+                {nextMraz === user?.id ? 'TI!' : 'Drugi igrač'}
+              </Text>
             </View>
           </View>
+
+          <TouchableOpacity
+            style={styles.restartButton}
+            onPress={handleRestartRound}
+          >
+            <LinearGradient
+              colors={['#4caf50', '#388e3c']}
+              style={styles.restartButtonGradient}
+            >
+              <Text style={styles.restartButtonText}>Play Again</Text>
+            </LinearGradient>
+          </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.exitButton}
             onPress={() => router.replace('/(main)/home')}
           >
-            <LinearGradient
-              colors={['#4fc3f7', '#0288d1']}
-              style={styles.exitButtonGradient}
-            >
-              <Text style={styles.exitButtonText}>Nazad na pocetnu</Text>
-            </LinearGradient>
+            <Text style={styles.exitButtonText}>{t('game.backToHome') || 'Nazad'}</Text>
           </TouchableOpacity>
         </View>
       </LinearGradient>
@@ -298,7 +313,10 @@ export default function PlayScreen() {
   }
 
   return (
-    <Animated.View style={[styles.container, { backgroundColor, paddingTop: insets.top }]}>
+    <LinearGradient
+      colors={['#0a1628', '#1a3a5c', '#0d2137']}
+      style={[styles.container, { paddingTop: insets.top }]}
+    >
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.exitBtn} onPress={handleExitGame}>
@@ -308,86 +326,100 @@ export default function PlayScreen() {
           <Ionicons name="time" size={20} color="#4fc3f7" />
           <Text style={styles.timerText}>{formatTime(gameTime)}</Text>
         </View>
-        <View style={styles.frozenCount}>
-          <Ionicons name="snow" size={20} color="#29b6f6" />
-          <Text style={styles.frozenCountText}>{frozenPlayers.length}</Text>
+        <View style={styles.roundBadge}>
+          <Text style={styles.roundText}>R{roundNumber}</Text>
         </View>
       </View>
 
-      {/* Main Content */}
-      <View style={styles.content}>
-        {/* Role Badge */}
-        <View style={[styles.roleBadge, isMraz ? styles.mrazBadge : styles.playerBadge]}>
-          <Ionicons
-            name={isMraz ? 'snow' : 'person'}
-            size={24}
-            color={isMraz ? '#29b6f6' : '#ff7043'}
-          />
-          <Text style={[styles.roleText, isMraz ? styles.mrazText : styles.playerText]}>
-            {isMraz ? 'TI SI MRAZ!' : isFrozen ? 'ZALEDJEN SI!' : 'BEGAJ!'}
-          </Text>
-        </View>
+      {/* My Status Badge */}
+      <View style={[styles.myStatusBadge, { backgroundColor: getStatusColor(myStatus) + '20', borderColor: getStatusColor(myStatus) }]}>
+        <Ionicons
+          name={isMraz ? 'snow' : isFrozen ? 'snow-outline' : 'checkmark-circle'}
+          size={24}
+          color={getStatusColor(myStatus)}
+        />
+        <Text style={[styles.myStatusText, { color: getStatusColor(myStatus) }]}>
+          {isMraz ? t('game.youAreMraz') || 'TI SI MRAZ!' : 
+           isFrozen ? t('game.youAreFrozen') || 'ZAMRZNUT SI!' : 
+           t('game.run') || 'ACTIVE'}
+        </Text>
+      </View>
 
-        {/* Status */}
-        {isFrozen && !isMraz && (
-          <View style={styles.frozenOverlay}>
-            <Ionicons name="snow" size={100} color="#4fc3f7" />
-            <Text style={styles.frozenText}>ZALEDJEN</Text>
-            <Text style={styles.frozenSubtext}>Cekaj da te neko odledi!</Text>
+      {/* Players List */}
+      <ScrollView style={styles.playersSection} contentContainerStyle={styles.playersContent}>
+        <Text style={styles.sectionTitle}>Igrači ({Object.keys(playerStatuses).length})</Text>
+        {Object.keys(playerStatuses).map((playerId) => {
+          const status = playerStatuses[playerId];
+          const isMe = playerId === user?.id;
+          
+          return (
+            <View
+              key={playerId}
+              style={[
+                styles.playerCard,
+                { borderColor: getStatusColor(status) }
+              ]}
+            >
+              <View style={styles.playerInfo}>
+                <Ionicons
+                  name={status === 'mraz' ? 'snow' : status === 'frozen' ? 'snow-outline' : 'person'}
+                  size={20}
+                  color={getStatusColor(status)}
+                />
+                <Text style={styles.playerName}>
+                  {isMe ? `${user.username} (TI)` : `Player ${playerId.slice(0, 6)}`}
+                </Text>
+              </View>
+              <View style={[styles.statusBadge, { backgroundColor: getStatusColor(status) }]}>
+                <Text style={styles.statusText}>{getStatusText(status)}</Text>
+              </View>
+            </View>
+          );
+        })}
+      </ScrollView>
+
+      {/* Action Buttons */}
+      <View style={[styles.actionArea, { paddingBottom: insets.bottom + 20 }]}>
+        {isFrozen && (
+          <View style={styles.frozenMessage}>
+            <Ionicons name="snow" size={40} color="#4fc3f7" />
+            <Text style={styles.frozenText}>{t('game.waitToUnfreeze') || 'Čekaj da te odlede!'}</Text>
           </View>
         )}
 
-        {/* Action Area */}
-        {!isFrozen && (
-          <Animated.View style={[styles.actionArea, { transform: [{ scale: pulseAnim }] }]}>
-            <TouchableOpacity
-              style={[
-                styles.actionButton,
-                isMraz ? styles.freezeButton : styles.unfreezeButton,
-              ]}
-              onPress={simulateProximity}
-              activeOpacity={0.8}
+        {isMraz && !isFrozen && (
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={handleFreeze}
+            activeOpacity={0.8}
+          >
+            <LinearGradient
+              colors={['#29b6f6', '#0288d1']}
+              style={styles.actionButtonGradient}
             >
-              <LinearGradient
-                colors={isMraz ? ['#29b6f6', '#0288d1'] : ['#ff7043', '#f4511e']}
-                style={styles.actionButtonGradient}
-              >
-                <Ionicons
-                  name={isMraz ? 'snow' : 'flame'}
-                  size={60}
-                  color="#fff"
-                />
-                <Text style={styles.actionButtonText}>
-                  {isMraz ? 'ZAMRZNI!' : 'ODLEDI!'}
-                </Text>
-                <Text style={styles.actionButtonSubtext}>
-                  Priblizi se igracu
-                </Text>
-              </LinearGradient>
-            </TouchableOpacity>
-          </Animated.View>
+              <Ionicons name="snow" size={32} color="#fff" />
+              <Text style={styles.actionButtonText}>{t('game.freeze') || 'ZAMRZNI!'}</Text>
+            </LinearGradient>
+          </TouchableOpacity>
         )}
 
-        {/* Instructions */}
-        <View style={styles.instructions}>
-          <Ionicons name="information-circle" size={20} color="#4fc3f7" />
-          <Text style={styles.instructionText}>
-            {isMraz
-              ? 'Priblizi rukavicu drugim igracima da ih zamrznes!'
-              : isFrozen
-                ? 'Stani mirno! Drugi igraci te mogu odlediti.'
-                : 'Begaj od Mraza! Odledi zaledjene igrace dodirom.'}
-          </Text>
-        </View>
+        {!isMraz && !isFrozen && (
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={handleUnfreeze}
+            activeOpacity={0.8}
+          >
+            <LinearGradient
+              colors={['#ff7043', '#f4511e']}
+              style={styles.actionButtonGradient}
+            >
+              <Ionicons name="flame" size={32} color="#fff" />
+              <Text style={styles.actionButtonText}>{t('game.unfreeze') || 'ODLEDI!'}</Text>
+            </LinearGradient>
+          </TouchableOpacity>
+        )}
       </View>
-
-      {/* Bluetooth Status */}
-      <View style={[styles.bluetoothStatus, { paddingBottom: insets.bottom + 20 }]}>
-        <Ionicons name="bluetooth" size={18} color="#4fc3f7" />
-        <Text style={styles.bluetoothText}>Bluetooth skeniranje aktivno</Text>
-        <View style={styles.bluetoothDot} />
-      </View>
-    </Animated.View>
+    </LinearGradient>
   );
 }
 
@@ -424,151 +456,124 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '700',
   },
-  frozenCount: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: 'rgba(41, 182, 246, 0.1)',
-    paddingHorizontal: 14,
+  roundBadge: {
+    backgroundColor: 'rgba(79, 195, 247, 0.1)',
+    paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 20,
   },
-  frozenCountText: {
-    color: '#29b6f6',
+  roundText: {
+    color: '#4fc3f7',
     fontSize: 16,
     fontWeight: '700',
   },
-  content: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 20,
-  },
-  roleBadge: {
+  myStatusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    paddingHorizontal: 24,
-    paddingVertical: 14,
-    borderRadius: 30,
-    marginBottom: 30,
-  },
-  mrazBadge: {
-    backgroundColor: 'rgba(41, 182, 246, 0.2)',
+    gap: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    marginHorizontal: 20,
+    marginTop: 16,
+    borderRadius: 16,
     borderWidth: 2,
-    borderColor: '#29b6f6',
   },
-  playerBadge: {
-    backgroundColor: 'rgba(255, 112, 67, 0.2)',
-    borderWidth: 2,
-    borderColor: '#ff7043',
-  },
-  roleText: {
+  myStatusText: {
     fontSize: 20,
     fontWeight: '700',
   },
-  mrazText: {
-    color: '#29b6f6',
+  playersSection: {
+    flex: 1,
+    marginTop: 20,
   },
-  playerText: {
-    color: '#ff7043',
+  playersContent: {
+    paddingHorizontal: 20,
+    paddingBottom: 20,
   },
-  frozenOverlay: {
+  sectionTitle: {
+    color: '#a8d4ff',
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 12,
+  },
+  playerCard: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    marginVertical: 40,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 10,
+    borderWidth: 1,
+  },
+  playerInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    flex: 1,
+  },
+  playerName: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  statusBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+  },
+  statusText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  actionArea: {
+    paddingHorizontal: 20,
+    paddingTop: 20,
+  },
+  frozenMessage: {
+    alignItems: 'center',
+    paddingVertical: 20,
   },
   frozenText: {
     color: '#4fc3f7',
-    fontSize: 36,
-    fontWeight: '900',
-    marginTop: 20,
-    textShadowColor: '#4fc3f7',
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 20,
-  },
-  frozenSubtext: {
-    color: '#a8d4ff',
     fontSize: 16,
     marginTop: 10,
   },
-  actionArea: {
-    marginVertical: 30,
-  },
   actionButton: {
-    borderRadius: 100,
+    borderRadius: 16,
     overflow: 'hidden',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.4,
-    shadowRadius: 16,
-    elevation: 10,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
   },
-  freezeButton: {},
-  unfreezeButton: {},
   actionButtonGradient: {
-    width: 200,
-    height: 200,
-    borderRadius: 100,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    paddingVertical: 20,
+    gap: 12,
   },
   actionButtonText: {
-    color: '#fff',
-    fontSize: 24,
-    fontWeight: '900',
-    marginTop: 10,
+    color: '#ffffff',
+    fontSize: 20,
+    fontWeight: '700',
   },
-  actionButtonSubtext: {
-    color: 'rgba(255, 255, 255, 0.8)',
-    fontSize: 12,
-    marginTop: 4,
-  },
-  instructions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(79, 195, 247, 0.1)',
-    paddingHorizontal: 20,
-    paddingVertical: 14,
-    borderRadius: 16,
-    gap: 10,
-    maxWidth: '100%',
-  },
-  instructionText: {
-    flex: 1,
-    color: '#a8d4ff',
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  bluetoothStatus: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 16,
-  },
-  bluetoothText: {
-    color: '#4fc3f7',
-    fontSize: 14,
-  },
-  bluetoothDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#4caf50',
-  },
-  gameOverContainer: {
+  roundOverContainer: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 30,
   },
-  gameOverTitle: {
+  roundOverTitle: {
     color: '#ffffff',
-    fontSize: 36,
+    fontSize: 32,
     fontWeight: '900',
     marginTop: 20,
   },
-  gameOverSubtitle: {
+  roundOverSubtitle: {
     color: '#a8d4ff',
     fontSize: 18,
     marginTop: 10,
@@ -578,36 +583,54 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginTop: 20,
   },
+  roundNumber: {
+    color: '#4fc3f7',
+    fontSize: 16,
+    marginTop: 8,
+  },
   statsContainer: {
-    flexDirection: 'row',
     marginTop: 30,
-    gap: 30,
+    alignItems: 'center',
   },
   statItem: {
     alignItems: 'center',
   },
-  statValue: {
-    color: '#4fc3f7',
-    fontSize: 32,
-    fontWeight: '700',
-  },
   statLabel: {
     color: '#a8d4ff',
     fontSize: 14,
-    marginTop: 4,
+    marginBottom: 8,
   },
-  exitButton: {
+  statValue: {
+    color: '#4fc3f7',
+    fontSize: 24,
+    fontWeight: '700',
+  },
+  restartButton: {
     marginTop: 40,
     borderRadius: 16,
     overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
   },
-  exitButtonGradient: {
+  restartButtonGradient: {
     paddingHorizontal: 40,
     paddingVertical: 16,
   },
-  exitButtonText: {
+  restartButtonText: {
     color: '#fff',
     fontSize: 18,
     fontWeight: '700',
+  },
+  exitButton: {
+    marginTop: 20,
+    paddingVertical: 14,
+  },
+  exitButtonText: {
+    color: '#5a7a9a',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
