@@ -85,6 +85,10 @@ Thumbs.db
 .cache/
 .parcel-cache
 
+# ==================== Metro Bundler ====================
+frontend/.metro-cache/
+.metro-cache/
+
 # ==================== Deployment ====================
 .vercel
 
